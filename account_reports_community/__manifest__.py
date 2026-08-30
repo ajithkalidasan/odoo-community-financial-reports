@@ -1,14 +1,33 @@
 {
-    'name': "Accounting Reports (Community)",
-    'summary': "Trial Balance, General Ledger and other financial reports built on Odoo Community's reporting engine.",
+    'name': "Advanced Financial Reports for Odoo Community",
+    'summary': "Complete financial reporting suite for Odoo Community with 10 essential reports, interactive analysis, and PDF/XLSX exports.",
     'description': """
-Adds a computation layer, frontend and report content on top of the
-account.report / account.report.line / account.report.expression engine
-that ships with Odoo Community, to provide Trial Balance and General
-Ledger reports (more reports added incrementally).
+Advanced Financial Reports for Odoo Community
+=============================================
 
-This module does not depend on, include, or reuse any code from the
-proprietary Odoo Enterprise 'account_reports' module.
+Provides a complete financial reporting suite designed specifically for Odoo Community Edition. Analyze your accounting data with 10 essential financial reports, including Trial Balance, General Ledger, Balance Sheet, Profit and Loss, Partner Ledger, Aged Receivable, Aged Payable, Tax Report, Journal Report, and Cash Flow Statement.
+
+Key features:
+-------------
+- 10 essential financial and accounting reports
+- Interactive report interface
+- Drill-down from reports to accounting details
+- Flexible reporting periods
+- Period comparison
+- Report-specific filters
+- Multi-company support
+- Multi-currency support
+- PDF export
+- XLSX export
+- Pagination for large transaction datasets
+
+Technical Information:
+----------------------
+This module is an independent implementation built for Odoo Community users. It uses the accounting reporting framework available in Odoo Community, including `account.report`, `account.report.line`, and `account.report.expression`. 
+
+This module does not depend on, include, or reuse proprietary code from the Odoo Enterprise 'account_reports' module.
+
+Designed for accountants, finance teams, business owners, and Odoo implementers who need comprehensive financial reporting in Odoo Community Edition.
     """,
     'category': 'Accounting/Accounting',
     'version': '19.0.1.0.0',
