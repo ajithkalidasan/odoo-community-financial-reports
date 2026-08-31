@@ -57,4 +57,5 @@ Designed for accountants, finance teams, business owners, and Odoo implementers 
     },
     'installable': True,
     'application': False,
+    'images': ['static/description/banner.png'],
 }
