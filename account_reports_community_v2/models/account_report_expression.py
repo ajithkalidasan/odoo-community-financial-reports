@@ -11,7 +11,7 @@ ACCOUNT_CODES_ENGINE_SPLIT_REGEX = re.compile(r'(?=[+-])')
 ACCOUNT_CODES_ENGINE_TERM_REGEX = re.compile(r'^(?P<sign>[+-]?)(?P<prefix>[a-zA-Z0-9_][a-zA-Z0-9_\.]*)(?:\\(?P<excluded_prefixes>[a-zA-Z0-9_,\.]+))?(?P<balance_character>[CD]?)$')
 
 # Original safe-arithmetic evaluator for the 'aggregation' engine, used only
-# +-*/() expressions over numbers via a whitelisted AST walk.
+# +-*/() expressions over numbers via a whitelisted AST walk. 
 _SAFE_OPERATORS = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
