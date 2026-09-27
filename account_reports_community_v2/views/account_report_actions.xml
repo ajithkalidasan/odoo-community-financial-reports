@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="action_trial_balance" model="ir.actions.client">
+            <field name="name">Trial Balance</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.trial_balance_report')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.trial_balance_report'), 'report_handler': 'generic', 'report_name': 'Trial Balance'}"/>
+        </record>
+
+        <record id="action_general_ledger" model="ir.actions.client">
+            <field name="name">General Ledger</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.general_ledger_report')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.general_ledger_report'), 'report_handler': 'general_ledger', 'report_name': 'General Ledger'}"/>
+        </record>
+
+        <record id="action_balance_sheet" model="ir.actions.client">
+            <field name="name">Balance Sheet</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.balance_sheet_report')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.balance_sheet_report'), 'report_handler': 'generic', 'report_name': 'Balance Sheet'}"/>
+        </record>
+
+        <record id="action_profit_and_loss" model="ir.actions.client">
+            <field name="name">Profit and Loss</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.profit_and_loss_report')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.profit_and_loss_report'), 'report_handler': 'generic', 'report_name': 'Profit and Loss'}"/>
+        </record>
+
+        <record id="action_partner_ledger" model="ir.actions.client">
+            <field name="name">Partner Ledger</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.partner_ledger_report')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.partner_ledger_report'), 'report_handler': 'partner_ledger', 'report_name': 'Partner Ledger'}"/>
+        </record>
+
+        <record id="action_aged_receivable" model="ir.actions.client">
+            <field name="name">Aged Receivable</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.aged_receivable_report')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.aged_receivable_report'), 'report_handler': 'aged_partner_balance', 'report_name': 'Aged Receivable'}"/>
+        </record>
+
+        <record id="action_aged_payable" model="ir.actions.client">
+            <field name="name">Aged Payable</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.aged_payable_report')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.aged_payable_report'), 'report_handler': 'aged_partner_balance', 'report_name': 'Aged Payable'}"/>
+        </record>
+
+        <record id="action_tax_report" model="ir.actions.client">
+            <field name="name">Tax Report</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.tax_report_community')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.tax_report_community'), 'report_handler': 'tax_report', 'report_name': 'Tax Report'}"/>
+        </record>
+
+        <record id="action_journal_report" model="ir.actions.client">
+            <field name="name">Journal Report</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.journal_report_community')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.journal_report_community'), 'report_handler': 'journal_report', 'report_name': 'Journal Report'}"/>
+        </record>
+
+        <record id="action_cash_flow_statement" model="ir.actions.client">
+            <field name="name">Cash Flow Statement</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.cash_flow_statement_report')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.cash_flow_statement_report'), 'report_handler': 'generic', 'report_name': 'Cash Flow Statement'}"/>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="account_reports_community_v2.TaxReportLines">
+        <t t-foreach="lines || []" t-as="line" t-key="line.id">
+            <tr class="o_account_reports_community_v2_gl_account_row">
+                <td>
+                    <span class="o_account_reports_community_v2_caret" t-on-click="() => this.toggleTaxReportTax(line)">
+                        <i class="oi oi-fw" t-att-data-icon="line.unfolded ? 'arrow_drop_down' : 'arrow_right'"/>
+                    </span>
+                    <strong role="button" class="cursor-pointer" t-on-click="() => this.toggleTaxReportTax(line)" t-out="line.name"/>
+                    <span class="text-muted"> (<t t-out="line.tax_type === 'sale' ? 'Sale' : 'Purchase'"/>)</span>
+                    <button class="btn btn-sm btn-link p-0 ms-2 text-decoration-none text-muted"
+                            title="All Journal Items"
+                            t-on-click.stop="() => this.onOpenTaxJournalItems(line)">
+                        <i class="oi oi-fw" data-icon="list_alt"/>
+                    </button>
+                </td>
+                <td class="text-end o_account_reports_community_v2_cell cursor-pointer"
+                    title="Click to view journal items"
+                    t-on-click="() => this.onOpenTaxJournalItems(line)"
+                    t-out="this.formatAmount(line.base_amount)"/>
+                <td class="text-end o_account_reports_community_v2_cell cursor-pointer"
+                    title="Click to view journal items"
+                    t-on-click="() => this.onOpenTaxJournalItems(line)">
+                    <strong t-out="this.formatAmount(line.tax_amount)"/>
+                </td>
+            </tr>
+            <t t-if="line.unfolded">
+                <tr t-foreach="line.aml_rows" t-as="row" t-key="row.id">
+                    <td>
+                        <a href="#" t-on-click.prevent="() => this.onOpenMove(row)" t-out="row.move_name"/>
+                        <span class="text-muted"> - <t t-out="row.date"/></span>
+                        <t t-if="row.partner">
+                            <span class="text-muted"> - </span>
+                            <a t-if="row.partner_id" href="#" t-on-click.prevent="() => this.onOpenPartner(row)" t-out="row.partner"/>
+                            <span t-else="" class="text-muted" t-out="row.partner"/>
+                        </t>
+                    </td>
+                    <td class="text-end" t-out="this.formatAmount(row.base_amount)"/>
+                    <td class="text-end" t-out="this.formatAmount(row.tax_amount)"/>
+                </tr>
+                <tr t-if="line.aml_rows_has_more" class="o_account_reports_community_v2_load_more_row">
+                    <td colspan="3" class="text-center">
+                        <button class="btn btn-link btn-sm" t-on-click="() => this.loadMoreAmlRows(line)" t-att-disabled="this.state.loadingMoreLineId === line.id">
+                            <t t-out="this.state.loadingMoreLineId === line.id ? 'Loading...' : 'Load more'"/>
+                        </button>
+                    </td>
+                </tr>
+            </t>
+        </t>
+    </t>
+
+</templates>

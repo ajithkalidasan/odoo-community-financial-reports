@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="account_reports_community_v2.JournalReportLines">
+        <t t-foreach="lines || []" t-as="line" t-key="line.id">
+            <tr class="o_account_reports_community_v2_gl_account_row">
+                <td colspan="4">
+                    <span class="o_account_reports_community_v2_caret" t-on-click="() => this.toggleJournalReportJournal(line)">
+                        <i class="oi oi-fw" t-att-data-icon="line.unfolded ? 'arrow_drop_down' : 'arrow_right'"/>
+                    </span>
+                    <strong role="button" class="cursor-pointer" t-on-click="() => this.toggleJournalReportJournal(line)" t-out="line.name"/>
+                    <button class="btn btn-sm btn-link p-0 ms-2 text-decoration-none text-muted"
+                            title="All Journal Items"
+                            t-on-click.stop="() => this.onOpenJournalReportJournalItems(line)">
+                        <i class="oi oi-fw" data-icon="list_alt"/>
+                    </button>
+                </td>
+                <td class="text-end" t-out="this.formatAmount(line.total_debit)"/>
+                <td class="text-end" t-out="this.formatAmount(line.total_credit)"/>
+            </tr>
+            <t t-if="line.unfolded">
+                <tr t-foreach="line.aml_rows" t-as="row" t-key="row.id">
+                    <td t-out="row.date"/>
+                    <td>
+                        <a href="#" t-on-click.prevent="() => this.onOpenMove(row)" t-out="row.move_name"/>
+                    </td>
+                    <td>
+                        <a t-if="row.account_id" href="#" t-on-click.prevent="() => this.onOpenAccount(row)" t-out="row.account"/>
+                        <t t-else="" t-out="row.account"/>
+                    </td>
+                    <td>
+                        <t t-if="row.partner">
+                            <a t-if="row.partner_id" href="#" t-on-click.prevent="() => this.onOpenPartner(row)" t-out="row.partner"/>
+                            <span t-else="" t-out="row.partner"/>
+                            <span t-if="row.label" class="text-muted d-block" t-out="row.label"/>
+                        </t>
+                        <t t-else="" t-out="row.label"/>
+                    </td>
+                    <td class="text-end" t-out="this.formatAmount(row.debit)"/>
+                    <td class="text-end" t-out="this.formatAmount(row.credit)"/>
+                </tr>
+                <tr t-if="line.aml_rows_has_more" class="o_account_reports_community_v2_load_more_row">
+                    <td colspan="6" class="text-center">
+                        <button class="btn btn-link btn-sm" t-on-click="() => this.loadMoreAmlRows(line)" t-att-disabled="this.state.loadingMoreLineId === line.id">
+                            <t t-out="this.state.loadingMoreLineId === line.id ? 'Loading...' : 'Load more'"/>
+                        </button>
+                    </td>
+                </tr>
+            </t>
+        </t>
+    </t>
+
+</templates>

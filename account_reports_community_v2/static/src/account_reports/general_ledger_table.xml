@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="account_reports_community_v2.GeneralLedgerLines">
+        <t t-foreach="lines || []" t-as="line" t-key="line.id">
+            <tr class="o_account_reports_community_v2_gl_account_row">
+                <td colspan="4">
+                    <span class="o_account_reports_community_v2_caret" t-on-click="() => this.toggleGeneralLedgerAccount(line)">
+                        <i class="oi oi-fw" t-att-data-icon="line.unfolded ? 'arrow_drop_down' : 'arrow_right'"/>
+                    </span>
+                    <strong role="button" class="cursor-pointer" t-on-click="() => this.toggleGeneralLedgerAccount(line)" t-out="line.name"/>
+                    <button class="btn btn-sm btn-link p-0 ms-2 text-decoration-none text-muted"
+                            title="All Journal Items"
+                            t-on-click.stop="() => this.onOpenAccountJournalItems(line)">
+                        <i class="oi oi-fw" data-icon="list_alt"/>
+                    </button>
+                    <button class="btn btn-sm btn-link p-0 ms-1 text-decoration-none text-muted"
+                            title="View Account"
+                            t-on-click.stop="() => this.onOpenAccount(line)">
+                        <i class="oi oi-fw" data-icon="open_in_new"/>
+                    </button>
+                </td>
+                <td class="text-end" t-out="this.formatAmount(line.total_debit)"/>
+                <td class="text-end" t-out="this.formatAmount(line.total_credit)"/>
+                <td class="text-end" t-out="this.formatAmount(line.opening_balance)"/>
+            </tr>
+            <t t-if="line.unfolded">
+                <tr t-foreach="line.aml_rows" t-as="row" t-key="row.id">
+                    <td t-out="row.date"/>
+                    <td>
+                        <a href="#" t-on-click.prevent="() => this.onOpenMove(row)" t-out="row.move_name"/>
+                    </td>
+                    <td>
+                        <a t-if="row.partner_id" href="#" t-on-click.prevent="() => this.onOpenPartner(row)" t-out="row.partner"/>
+                        <t t-else="" t-out="row.partner"/>
+                    </td>
+                    <td>
+                        <t t-out="row.label"/>
+                        <small t-if="row.foreign_currency_name" class="text-muted d-block">
+                            <t t-out="row.amount_currency.toFixed(2)"/> <t t-out="row.foreign_currency_name"/>
+                        </small>
+                    </td>
+                    <td class="text-end" t-out="this.formatAmount(row.debit)"/>
+                    <td class="text-end" t-out="this.formatAmount(row.credit)"/>
+                    <td class="text-end" t-out="this.formatAmount(row.running_balance)"/>
+                </tr>
+                <tr t-if="line.aml_rows_has_more" class="o_account_reports_community_v2_load_more_row">
+                    <td colspan="7" class="text-center">
+                        <button class="btn btn-link btn-sm" t-on-click="() => this.loadMoreAmlRows(line)" t-att-disabled="this.state.loadingMoreLineId === line.id">
+                            <t t-out="this.state.loadingMoreLineId === line.id ? 'Loading...' : 'Load more'"/>
+                        </button>
+                    </td>
+                </tr>
+                <tr class="o_account_reports_community_v2_gl_closing_row">
+                    <td colspan="6" class="text-end"><strong>Closing Balance</strong></td>
+                    <td class="text-end"><strong t-out="this.formatAmount(line.closing_balance)"/></td>
+                </tr>
+            </t>
+        </t>
+    </t>
+
+</templates>
