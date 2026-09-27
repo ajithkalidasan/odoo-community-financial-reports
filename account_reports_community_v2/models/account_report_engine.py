@@ -80,20 +80,13 @@ class AccountReport(models.Model):
             'focus_partner_id': params.get('focus_partner_id'),
             'partner_ids': params.get('partner_ids') or None,
             'comparison_periods': int(params.get('comparison_periods') or 0),
-            # Set by the frontend's date-preset dropdown (This Month/Quarter/
-            # Year, etc.) to a value in ('month', 'quarter', 'year') so
-            # comparison periods shift by whole calendar units instead of a
-            # raw day count; left as None for manually-typed custom ranges,
-            # where a day-count shift is the only generic option available.
+            'comparison_type': params.get('comparison_type') or 'previous_period',
             'period_granularity': params.get('period_granularity'),
-            # Set only by the PDF/XLSX export controllers: forces every
-            # foldable row open and fetches every journal-item row instead
-            # of one AML_PAGE_SIZE page, since an export is supposed to
-            # contain everything, not just whatever happens to be expanded
-            # in the UI right now.
             'export_mode': bool(params.get('export_mode')),
-            # When True, all lines/groups are expanded in the UI.
             'unfold_all': bool(params.get('unfold_all')),
+            'show_percentages': bool(params.get('show_percentages')),
+            'selected_groupby': params.get('selected_groupby') or 'default',
+            'active_section_id': int(params['active_section_id']) if params.get('active_section_id') else None,
         }
 
     def _format_period_label(self, date_from, date_to):
@@ -105,17 +98,7 @@ class AccountReport(models.Model):
 
     def _shift_period_back(self, date_from, date_to, granularity):
         """Return the (date_from, date_to) of the period immediately
-        preceding [date_from, date_to].
-
-        For 'month'/'quarter'/'year' granularity this shifts by whole
-        calendar units (so Feb 1-28 correctly compares to Jan 1-31, not to
-        a raw 28-day window that would land mid-January) -- this only makes
-        sense when date_from/date_to are themselves aligned to that unit's
-        boundaries, which is guaranteed when they came from the frontend's
-        date-preset dropdown. For anything else (arbitrary custom ranges,
-        or no granularity given), fall back to shifting back by the exact
-        number of days in the current range, the only generic option there.
-        """
+        preceding [date_from, date_to]."""
         if granularity == 'month':
             prev_from = date_from - relativedelta(months=1)
             last_day = calendar.monthrange(prev_from.year, prev_from.month)[1]
@@ -137,12 +120,10 @@ class AccountReport(models.Model):
 
     def _get_comparison_options_list(self, options):
         """Build [current_period_options, previous_period_options, ...],
-        one dict per period the report should display, each a copy of
-        `options` with date_from/date_to shifted back one period and a
-        display label attached. Comparison is entirely a data concern: the
-        frontend just renders one extra column-group per period returned
-        here, with no logic of its own."""
+        one dict per period the report should display. Supports standard
+        sequential period comparison as well as Same Period Last Year (YoY)."""
         comparison_count = options.get('comparison_periods') or 0
+        comparison_type = options.get('comparison_type') or 'previous_period'
         granularity = options.get('period_granularity')
 
         current = dict(options)
@@ -152,8 +133,14 @@ class AccountReport(models.Model):
         cursor_from = fields.Date.from_string(options['date_from'])
         cursor_to = fields.Date.from_string(options['date_to'])
 
-        for _ in range(comparison_count):
-            cursor_from, cursor_to = self._shift_period_back(cursor_from, cursor_to, granularity)
+        for i in range(comparison_count):
+            if comparison_type in ('same_period_last_year', 'yoy'):
+                # Compare to exact same calendar window 1+ years ago
+                cursor_from = cursor_from - relativedelta(years=1)
+                cursor_to = cursor_to - relativedelta(years=1)
+            else:
+                cursor_from, cursor_to = self._shift_period_back(cursor_from, cursor_to, granularity)
+
             period_options = dict(options)
             period_options['date_from'] = fields.Date.to_string(cursor_from)
             period_options['date_to'] = fields.Date.to_string(cursor_to)
@@ -400,6 +387,9 @@ class AccountReport(models.Model):
 
     def _get_report_data(self, options):
         self.ensure_one()
+        if self.use_sections and self.section_report_ids:
+            return self._get_composite_report_data(options)
+
         handler = self.report_handler or 'generic'
         if handler == 'general_ledger':
             return self._get_general_ledger_data(options)
@@ -412,6 +402,136 @@ class AccountReport(models.Model):
         if handler == 'journal_report':
             return self._get_journal_report_data(options)
         return self._get_generic_report_data(options)
+
+    def _get_composite_report_data(self, options):
+        self.ensure_one()
+        sections = [
+            {'id': sub.id, 'name': sub.name, 'report_handler': sub.report_handler or 'generic'}
+            for sub in self.section_report_ids.sorted('sequence')
+        ]
+        active_id = options.get('active_section_id')
+        active_sub = self.section_report_ids.filtered(lambda s: s.id == active_id)
+        if not active_sub:
+            active_sub = self.section_report_ids[0]
+
+        sub_data = active_sub._get_report_data(options)
+        sub_data['is_composite'] = True
+        sub_data['composite_report_id'] = self.id
+        sub_data['composite_report_name'] = self.name
+        sub_data['sections'] = sections
+        sub_data['active_section_id'] = active_sub.id
+
+        if options.get('export_mode'):
+            all_sections_data = []
+            for sub in self.section_report_ids.sorted('sequence'):
+                sub_opts = dict(options)
+                sub_opts['export_mode'] = True
+                all_sections_data.append(sub._get_report_data(sub_opts))
+            sub_data['sections_data'] = all_sections_data
+
+        return sub_data
+
+    def _enrich_generic_report_lines(self, lines, periods, options):
+        """Enrich lines with percentage of total (vertical common-size analysis),
+        horizontal variance (amount and %), and sparkline history."""
+        def collect_all_lines(items):
+            flat = []
+            for it in items:
+                flat.append(it)
+                if it.get('children'):
+                    flat.extend(collect_all_lines(it['children']))
+            return flat
+
+        all_flat_lines = collect_all_lines(lines)
+
+        base_denominators = []
+        for p_idx in range(len(periods)):
+            def get_col_val(l):
+                if not l.get('periods') or p_idx >= len(l['periods']):
+                    return 0.0
+                cols = l['periods'][p_idx].get('columns') or []
+                if not cols:
+                    return 0.0
+                return abs(cols[0].get('value') or 0.0)
+
+            base_val = 0.0
+
+            # Priority 1: Match standard total summary lines (Total Assets, Total Operating Income, Total Revenue)
+            for l in all_flat_lines:
+                name = (l.get('name') or '').upper()
+                code = (l.get('code') or '').upper()
+                v = get_col_val(l)
+                if v > 0:
+                    if any(target in name for target in (
+                        'TOTAL ASSET', 'TOTAL ASSETS',
+                        'TOTAL OPERATING INCOME', 'TOTAL REVENUE', 'OPERATING REVENUE',
+                        'TOTAL INCOME', 'TURNOVER', 'NET SALES', 'GROSS REVENUE',
+                        'TOTAL LIABILITIES AND EQUITY',
+                    )):
+                        base_val = v
+                        break
+                    if any(target in code for target in (
+                        'TOTAL_ASSET', 'TOTAL_ASSETS', 'TOTAL_INCOME',
+                        'TOTAL_REVENUE', 'REV_TOTAL', 'INCOME_TOTAL',
+                    )):
+                        base_val = v
+                        break
+
+            # Priority 2: Any Asset, Revenue, Income, Sales line with positive value
+            if not base_val:
+                for l in all_flat_lines:
+                    name = (l.get('name') or '').upper()
+                    code = (l.get('code') or '').upper()
+                    v = get_col_val(l)
+                    if v > 0 and (
+                        any(target in name for target in ('ASSET', 'REVENUE', 'INCOME', 'SALES'))
+                        or any(target in code for target in ('ASSET', 'REV', 'INC', 'SALES'))
+                    ):
+                        base_val = v
+                        break
+
+            # Priority 3: Fallback to highest value line in report
+            if not base_val:
+                all_vals = [get_col_val(l) for l in all_flat_lines]
+                pos_vals = [v for v in all_vals if v > 0]
+                base_val = max(pos_vals) if pos_vals else 0.0
+
+            base_denominators.append(base_val)
+
+        def walk_and_enrich(line_items):
+            for line in line_items:
+                sparkline = [p['columns'][0]['value'] or 0.0 for p in line.get('periods', [])]
+                line['sparkline_data'] = sparkline[::-1]
+
+                for p_idx, period in enumerate(line.get('periods', [])):
+                    denom = base_denominators[p_idx] if p_idx < len(base_denominators) else 0.0
+                    for col in period.get('columns', []):
+                        val = col.get('value')
+                        if val is not None and denom > 0:
+                            if val == 0.0 and line.get('level') == 0:
+                                col['percent_of_total'] = None
+                            else:
+                                col['percent_of_total'] = round((val / denom) * 100.0, 1)
+                        else:
+                            col['percent_of_total'] = None
+
+                if len(line.get('periods', [])) > 1:
+                    curr_val = line['periods'][0]['columns'][0]['value'] or 0.0
+                    prev_val = line['periods'][1]['columns'][0]['value'] or 0.0
+                    diff = curr_val - prev_val
+                    line['variance_amount'] = diff
+                    if prev_val != 0.0:
+                        line['variance_percent'] = round((diff / abs(prev_val)) * 100.0, 1)
+                    else:
+                        line['variance_percent'] = None
+                else:
+                    line['variance_amount'] = None
+                    line['variance_percent'] = None
+
+                if line.get('children'):
+                    walk_and_enrich(line['children'])
+
+        walk_and_enrich(lines)
 
     def _get_generic_report_data(self, options):
         self.ensure_one()
@@ -430,6 +550,8 @@ class AccountReport(models.Model):
 
         top_level_lines = self.line_ids.filtered(lambda line: not line.parent_id).sorted('sequence')
         lines = [line._build_line_row(options_list) for line in top_level_lines]
+
+        self._enrich_generic_report_lines(lines, periods, options)
 
         gl_report = self.env.ref(GENERAL_LEDGER_REPORT_XMLID, raise_if_not_found=False)
         if not gl_report:

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Composite Financial Package: bundles Balance Sheet, Profit and Loss,
+             and Cash Flow Statement in one unified tabbed report with combined export -->
+        <record id="composite_financial_statements_report" model="account.report">
+            <field name="name">Financial Statements Package</field>
+            <field name="report_handler">generic</field>
+            <field name="filter_date_range" eval="True"/>
+            <field name="use_sections" eval="True"/>
+            <field name="availability_condition">always</field>
+            <field name="section_report_ids" eval="[(6, 0, [
+                ref('account_reports_community_v2.balance_sheet_report'),
+                ref('account_reports_community_v2.profit_and_loss_report'),
+                ref('account_reports_community_v2.cash_flow_statement_report')
+            ])]"/>
+        </record>
+
+    </data>
+</odoo>

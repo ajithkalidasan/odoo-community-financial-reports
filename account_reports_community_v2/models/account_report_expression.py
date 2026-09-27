@@ -145,51 +145,45 @@ class AccountReportExpression(models.Model):
             value = -value
         return value, [domain]
 
-    def _evaluate_batch_by_account(self, options, account_ids):
-        """Like _evaluate(), but computes the value for every id in
-        account_ids with a *single* query instead of one query per account.
-
-        Used by account.report.line._build_groupby_row so that a
-        groupby='account_id' line (Trial Balance's account rows, every
-        Balance Sheet/P&L leaf category) doesn't fan out into one query per
-        account per column per period - with a few hundred accounts and a
-        handful of columns that was hundreds of round-trips for something a
-        single GROUP BY query answers directly.
-
-        Only implemented for the 'domain' engine, which is what every
-        current groupby line actually uses. Returns None for any other
-        engine so the caller can fall back to the slower per-account
-        _evaluate() loop (still correct, just not batched).
-        """
+    def _evaluate_batch_by_field(self, options, field_name, record_ids):
+        """Computes the value for every id in record_ids with a single GROUP BY
+        query over field_name (e.g. 'account_id', 'partner_id', 'journal_id')."""
         self.ensure_one()
-        if self.engine != 'domain' or not account_ids:
+        if self.engine != 'domain' or not record_ids:
             return None
 
         date_from, date_to = self._resolve_date_scope(options)
         formula = (self.formula or '[]').strip()
         base_domain = ast.literal_eval(formula) if formula not in ('', '[]') else []
-        domain = self._base_aml_domain(options, date_from, date_to) + base_domain + [('account_id', 'in', account_ids)]
+        domain = self._base_aml_domain(options, date_from, date_to) + base_domain + [(field_name, 'in', record_ids)]
 
         field, negate = self._domain_engine_field_and_sign()
-        # Grouped by (account, company) rather than just account: an
-        # account can be shared across companies (Odoo's shared chart of
-        # accounts), and those companies can use different currencies - see
-        # the matching comment on _sum_aml.
         groups = self.env['account.move.line']._read_group(
-            domain, groupby=['account_id', 'company_id'], aggregates=[f'{field}:sum'],
+            domain, groupby=[field_name, 'company_id'], aggregates=[f'{field}:sum'],
         )
         report = self.report_line_id.report_id
         target_currency = report._get_report_currency(options)
-        amount_by_account = {}
-        for account, company, value in groups:
-            amount_by_account.setdefault(account.id, {})[company.id] = value or 0.0
+        amount_by_rec = {}
+        for rec, company, value in groups:
+            rec_id = rec.id if hasattr(rec, 'id') else rec
+            if rec_id:
+                amount_by_rec.setdefault(rec_id, {})[company.id] = value or 0.0
         values = {
-            account_id: report._convert_and_sum_by_company(amount_by_company, target_currency, date_to)
-            for account_id, amount_by_company in amount_by_account.items()
+            rec_id: report._convert_and_sum_by_company(amount_by_company, target_currency, date_to)
+            for rec_id, amount_by_company in amount_by_rec.items()
         }
         if negate:
-            values = {account_id: -value for account_id, value in values.items()}
+            values = {rec_id: -value for rec_id, value in values.items()}
         return values
+
+    def _evaluate_batch_by_account(self, options, account_ids):
+        return self._evaluate_batch_by_field(options, 'account_id', account_ids)
+
+    def _evaluate_batch_by_partner(self, options, partner_ids):
+        return self._evaluate_batch_by_field(options, 'partner_id', partner_ids)
+
+    def _evaluate_batch_by_journal(self, options, journal_ids):
+        return self._evaluate_batch_by_field(options, 'journal_id', journal_ids)
 
     # -- engine: account_codes ---------------------------------------------
     def _parse_account_codes_formula(self):

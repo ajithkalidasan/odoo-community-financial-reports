@@ -72,5 +72,12 @@
             <field name="params" eval="{'report_id': ref('account_reports_community_v2.cash_flow_statement_report'), 'report_handler': 'generic', 'report_name': 'Cash Flow Statement'}"/>
         </record>
 
+        <record id="action_composite_financial_statements" model="ir.actions.client">
+            <field name="name">Financial Statements Package</field>
+            <field name="tag">account_report_community</field>
+            <field name="context" eval="{'report_id': ref('account_reports_community_v2.composite_financial_statements_report')}"/>
+            <field name="params" eval="{'report_id': ref('account_reports_community_v2.composite_financial_statements_report'), 'report_handler': 'generic', 'report_name': 'Financial Statements Package'}"/>
+        </record>
+
     </data>
 </odoo>

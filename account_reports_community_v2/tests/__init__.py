@@ -10,3 +10,4 @@ from . import test_journal_report
 from . import test_cash_flow_statement
 from . import test_export
 from . import test_multi_currency
+from . import test_odoo20_features

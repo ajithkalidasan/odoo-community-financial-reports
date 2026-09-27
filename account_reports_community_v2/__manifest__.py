@@ -30,7 +30,7 @@ This module does not depend on, include, or reuse proprietary code from the Odoo
 Designed for accountants, finance teams, business owners, and Odoo implementers who need comprehensive financial reporting in Odoo 20 Community Edition.
     """,
     'category': 'Accounting/Accounting',
-    'version': '20.0.1.0.0',
+    'version': '20.0.2.0.0',
     'author': 'Ajith',
     'website': 'https://ajithkalidasan.github.io/ajith/',
     'license': 'LGPL-3',
@@ -46,6 +46,7 @@ Designed for accountants, finance teams, business owners, and Odoo implementers 
         'data/tax_report.xml',
         'data/journal_report.xml',
         'data/cash_flow_statement_report.xml',
+        'data/composite_financial_package_report.xml',
         'report/account_report_pdf_templates.xml',
         'views/account_report_actions.xml',
         'views/account_report_menus.xml',
@@ -56,6 +57,7 @@ Designed for accountants, finance teams, business owners, and Odoo implementers 
         ],
     },
     'installable': True,
-    'application': False,
+    'application': True,
+    'auto_install': False,
     'images': ['static/description/banner.png'],
 }

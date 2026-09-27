@@ -15,6 +15,7 @@ export class AccountReportAction extends Component {
     setup() {
         this.orm = useService("orm");
         this.actionService = useService("action");
+        this.ui = useService("ui");
         const actionContext = this.props.action.context || {};
         const actionParams = this.props.action.params || {};
 
@@ -47,8 +48,12 @@ export class AccountReportAction extends Component {
             availableCurrencies: [],
             currencyMenuOpen: false,
             comparisonEnabled: false,
+            comparisonCount: 1,
+            comparisonType: "previous_period",
+            comparisonMenuOpen: false,
             periodGranularity: null,
             presetMenuOpen: false,
+            activeDatePreset: "this_year",
             partnerIds: [],
             availablePartners: [],
             partnerMenuOpen: false,
@@ -56,6 +61,13 @@ export class AccountReportAction extends Component {
             isLoading: false,
             loadingMoreLineId: null,
             unfoldAll: false,
+            showPercentages: false,
+            selectedGroupBy: "default",
+            groupByMenuOpen: false,
+            activeSectionId: null,
+            dateMenuOpen: false,
+            optionsMenuOpen: false,
+            dismissUnpostedWarning: false,
         });
 
         this.display = { controlPanel: {} };
@@ -120,8 +132,12 @@ export class AccountReportAction extends Component {
             journal_ids: this.state.journalIds.length ? [...this.state.journalIds] : null,
             partner_ids: this.state.partnerIds.length ? [...this.state.partnerIds] : null,
             all_entries: this.state.allEntries,
-            comparison_periods: this.state.comparisonEnabled ? 1 : 0,
+            comparison_periods: this.state.comparisonEnabled ? this.state.comparisonCount : 0,
+            comparison_type: this.state.comparisonType,
             period_granularity: this.state.periodGranularity,
+            show_percentages: this.state.showPercentages,
+            selected_groupby: this.state.selectedGroupBy,
+            active_section_id: this.state.activeSectionId,
         };
     }
 
@@ -133,9 +149,85 @@ export class AccountReportAction extends Component {
         await this.loadReport();
     }
 
-    async toggleComparison() {
-        this.state.comparisonEnabled = !this.state.comparisonEnabled;
+    async togglePercentages() {
+        this.state.showPercentages = !this.state.showPercentages;
         await this.loadReport();
+    }
+
+    toggleGroupByMenu() {
+        this.state.groupByMenuOpen = !this.state.groupByMenuOpen;
+    }
+
+    async selectGroupBy(groupByKey) {
+        this.state.selectedGroupBy = groupByKey;
+        this.state.groupByMenuOpen = false;
+        await this.loadReport();
+    }
+
+    get groupByFilterLabel() {
+        if (this.state.selectedGroupBy === "partner_id") {
+            return "Group: Partner";
+        }
+        if (this.state.selectedGroupBy === "journal_id") {
+            return "Group: Journal";
+        }
+        return "Group: Default";
+    }
+
+    toggleComparisonMenu() {
+        this.state.comparisonMenuOpen = !this.state.comparisonMenuOpen;
+    }
+
+    async selectComparison(count, type) {
+        if (count === 0) {
+            this.state.comparisonEnabled = false;
+        } else {
+            this.state.comparisonEnabled = true;
+            this.state.comparisonCount = count;
+            this.state.comparisonType = type || "previous_period";
+        }
+        this.state.comparisonMenuOpen = false;
+        await this.loadReport();
+    }
+
+    get comparisonFilterLabel() {
+        if (!this.state.comparisonEnabled) {
+            return "Comparison";
+        }
+        if (this.state.comparisonType === "same_period_last_year" || this.state.comparisonType === "yoy") {
+            return "YoY (1 Year)";
+        }
+        if (this.state.comparisonCount === 1) {
+            return "1 Period";
+        }
+        return `${this.state.comparisonCount} Periods`;
+    }
+
+    async selectSection(sectionId) {
+        this.state.activeSectionId = sectionId;
+        this.state.unfoldedLineIds = [];
+        this.state.dismissUnpostedWarning = false;
+        await this.loadReport();
+    }
+
+    formatPercent(val) {
+        if (val === null || val === undefined) return "";
+        return `${val > 0 ? "+" : ""}${val.toFixed(1)}%`;
+    }
+
+    getSparklinePoints(data) {
+        if (!data || data.length < 2) return "";
+        const min = Math.min(...data);
+        const max = Math.max(...data);
+        const range = max - min || 1;
+        const width = 50;
+        const height = 16;
+        const step = width / (data.length - 1);
+        return data.map((val, idx) => {
+            const x = (idx * step).toFixed(1);
+            const y = (height - ((val - min) / range) * (height - 4) - 2).toFixed(1);
+            return `${x},${y}`;
+        }).join(" ");
     }
 
     async loadReport() {
@@ -231,12 +323,14 @@ export class AccountReportAction extends Component {
         // A manual edit may no longer be aligned to a calendar month/quarter/
         // year boundary, so comparison falls back to a plain day-count shift.
         this.state.periodGranularity = null;
+        this.state.activeDatePreset = null;
         await this.loadReport();
     }
 
     async onDateToChange(ev) {
         this.state.dateTo = ev.target.value;
         this.state.periodGranularity = null;
+        this.state.activeDatePreset = null;
         await this.loadReport();
     }
 
@@ -294,7 +388,66 @@ export class AccountReportAction extends Component {
         this.state.dateFrom = AccountReportAction.formatDate(from);
         this.state.dateTo = AccountReportAction.formatDate(to);
         this.state.periodGranularity = granularity;
+        this.state.activeDatePreset = preset;
         this.state.presetMenuOpen = false;
+        this.state.dateMenuOpen = false;
+        await this.loadReport();
+    }
+
+    toggleDateMenu() {
+        this.state.dateMenuOpen = !this.state.dateMenuOpen;
+    }
+
+    closeDateMenu() {
+        this.state.dateMenuOpen = false;
+        this.loadReport();
+    }
+
+    toggleOptionsMenu() {
+        this.state.optionsMenuOpen = !this.state.optionsMenuOpen;
+    }
+
+    get dateFilterLabel() {
+        const report = this.state.report;
+        if (report && report.report_handler === "aged_partner_balance") {
+            return this.state.dateTo ? `As of: ${this.state.dateTo}` : "As of: Today";
+        }
+        const presetLabels = {
+            today: "Today",
+            this_month: "This Month",
+            this_quarter: "This Quarter",
+            this_year: "This Year",
+            last_month: "Last Month",
+            last_quarter: "Last Quarter",
+            last_year: "Last Year",
+        };
+        if (this.state.activeDatePreset && presetLabels[this.state.activeDatePreset]) {
+            return presetLabels[this.state.activeDatePreset];
+        }
+        if (this.state.dateFrom && this.state.dateTo) {
+            return `${this.state.dateFrom} → ${this.state.dateTo}`;
+        }
+        if (this.state.dateTo) {
+            return `Until ${this.state.dateTo}`;
+        }
+        return "Dates";
+    }
+
+    get activeOptionsCount() {
+        let count = 0;
+        if (this.state.allEntries) count++;
+        if (this.state.showPercentages) count++;
+        if (this.state.unfoldAll) count++;
+        return count;
+    }
+
+    async selectAllJournals() {
+        this.state.journalIds = this.state.availableJournals.map((j) => j.id);
+        await this.loadReport();
+    }
+
+    async clearAllJournals() {
+        this.state.journalIds = [];
         await this.loadReport();
     }
 
@@ -447,6 +600,16 @@ export class AccountReportAction extends Component {
     onPageClick(ev) {
         if (this.state.openMenuLineId && !ev.target.closest(".o_account_reports_community_v2_kebab_wrapper")) {
             this.state.openMenuLineId = null;
+        }
+        if (!ev.target.closest(".position-relative")) {
+            this.state.dateMenuOpen = false;
+            this.state.presetMenuOpen = false;
+            this.state.optionsMenuOpen = false;
+            this.state.groupByMenuOpen = false;
+            this.state.comparisonMenuOpen = false;
+            this.state.journalMenuOpen = false;
+            this.state.currencyMenuOpen = false;
+            this.state.partnerMenuOpen = false;
         }
     }
 

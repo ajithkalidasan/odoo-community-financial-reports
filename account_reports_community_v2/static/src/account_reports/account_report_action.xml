@@ -5,229 +5,395 @@
         <div class="o_action o_account_reports_community_v2">
             <Layout display="this.display">
                 <div class="o_account_reports_community_v2_page" t-if="this.state.report" t-on-click="this.onPageClick">
-                    <div class="o_account_reports_community_v2_toolbar d-flex align-items-center gap-3 flex-wrap px-3 py-2 border-bottom">
-                        <input t-if="!this.isPartnerBasedReport"
-                               type="text" class="o_account_reports_community_v2_search" t-att-placeholder="this.searchPlaceholder"
-                               t-on-input="this.onSearchInput"/>
-
-                        <span t-if="this.isPartnerBasedReport" class="position-relative">
-                            <button class="btn btn-secondary btn-sm" t-on-click="this.togglePartnerMenu">
-                                <i class="oi oi-fw me-1" data-icon="group"/><t t-out="this.partnerFilterLabel"/>
+                    
+                    <!-- Composite Financial Package: Modern Underline Navigation Tabs -->
+                    <div t-if="this.state.report.is_composite" class="o_account_reports_composite_nav px-3 pt-2 bg-view border-bottom">
+                        <div class="nav nav-tabs border-0 gap-1">
+                            <button t-foreach="this.state.report.sections" t-as="sec" t-key="sec.id"
+                                    class="nav-link py-2 px-3"
+                                    t-att-class="{ 'active': this.state.report.active_section_id === sec.id }"
+                                    t-on-click="() => this.selectSection(sec.id)">
+                                <t t-out="sec.name"/>
                             </button>
-                            <div t-if="this.state.partnerMenuOpen"
-                                 class="o_account_reports_community_v2_menu o_account_reports_community_v2_menu_scrollable dropdown-menu show position-absolute p-2">
-                                <input type="text" class="o_account_reports_community_v2_search mb-2" placeholder="Filter partners..."
-                                       t-on-input="this.onPartnerFilterQueryInput"/>
-                                <div t-foreach="this.filteredAvailablePartners" t-as="partner" t-key="partner.id"
-                                     class="form-check">
-                                    <input type="checkbox" class="form-check-input"
-                                           t-att-checked="this.state.partnerIds.includes(partner.id)"
-                                           t-on-change="() => this.togglePartnerFilter(partner.id)"/>
-                                    <label class="form-check-label" t-out="partner.name"/>
-                                </div>
-                            </div>
-                        </span>
-
-                        <span class="position-relative">
-                            <button class="btn btn-secondary btn-sm" t-on-click="this.togglePresetMenu">
-                                <i class="oi oi-fw me-1" data-icon="calendar_today"/>Period
-                            </button>
-                            <div t-if="this.state.presetMenuOpen"
-                                 class="o_account_reports_community_v2_menu dropdown-menu show position-absolute">
-                                <a href="#" class="dropdown-item" t-on-click.prevent="() => this.applyDatePreset('today')">Today</a>
-                                <a href="#" class="dropdown-item" t-on-click.prevent="() => this.applyDatePreset('this_month')">This Month</a>
-                                <a href="#" class="dropdown-item" t-on-click.prevent="() => this.applyDatePreset('last_month')">Last Month</a>
-                                <a href="#" class="dropdown-item" t-on-click.prevent="() => this.applyDatePreset('this_quarter')">This Quarter</a>
-                                <a href="#" class="dropdown-item" t-on-click.prevent="() => this.applyDatePreset('last_quarter')">Last Quarter</a>
-                                <a href="#" class="dropdown-item" t-on-click.prevent="() => this.applyDatePreset('this_year')">This Year</a>
-                                <a href="#" class="dropdown-item" t-on-click.prevent="() => this.applyDatePreset('last_year')">Last Year</a>
-                            </div>
-                        </span>
-
-                        <div class="d-flex align-items-center gap-1">
-                            <label t-if="this.state.report.report_handler !== 'aged_partner_balance'" class="mb-0 text-muted">From</label>
-                            <input t-if="this.state.report.report_handler !== 'aged_partner_balance'"
-                                   type="date" class="o_account_reports_community_v2_date" t-att-value="this.state.dateFrom" t-on-change="this.onDateFromChange"/>
-                            <label class="mb-0 text-muted">
-                                <t t-out="this.state.report.report_handler === 'aged_partner_balance' ? 'As of' : 'To'"/>
-                            </label>
-                            <input type="date" class="o_account_reports_community_v2_date" t-att-value="this.state.dateTo" t-on-change="this.onDateToChange"/>
                         </div>
-
-                        <span class="position-relative">
-                            <button class="btn btn-secondary btn-sm" t-on-click="this.toggleJournalMenu">
-                                <i class="oi oi-fw me-1" data-icon="menu_book"/><t t-out="this.journalFilterLabel"/>
-                            </button>
-                            <div t-if="this.state.journalMenuOpen"
-                                 class="o_account_reports_community_v2_menu dropdown-menu show position-absolute p-2">
-                                <div t-foreach="this.state.availableJournals" t-as="journal" t-key="journal.id"
-                                     class="form-check">
-                                    <input type="checkbox" class="form-check-input"
-                                           t-att-checked="this.state.journalIds.includes(journal.id)"
-                                           t-on-change="() => this.toggleJournal(journal.id)"/>
-                                    <label class="form-check-label" t-out="journal.name"/>
-                                </div>
-                            </div>
-                        </span>
-
-                        <span t-if="this.state.availableCurrencies.length > 1" class="position-relative">
-                            <button class="btn btn-secondary btn-sm" t-on-click="this.toggleCurrencyMenu">
-                                <i class="oi oi-fw me-1" data-icon="payments"/><t t-out="this.currencyFilterLabel"/>
-                            </button>
-                            <div t-if="this.state.currencyMenuOpen"
-                                 class="o_account_reports_community_v2_menu dropdown-menu show position-absolute">
-                                <a t-foreach="this.state.availableCurrencies" t-as="currency" t-key="currency.id"
-                                   href="#" class="dropdown-item"
-                                   t-att-class="{ active: this.state.currencyId === currency.id }"
-                                   t-on-click.prevent="() => this.selectCurrency(currency.id)"
-                                   t-out="currency.name"/>
-                            </div>
-                        </span>
-
-                        <button class="btn btn-secondary btn-sm" t-on-click="this.toggleAllEntries">
-                            <i class="oi oi-fw me-1" data-icon="filter_list"/>
-                            <t t-out="this.state.allEntries ? 'All Entries' : 'Posted Entries'"/>
-                        </button>
-
-                        <button class="btn btn-secondary btn-sm" t-on-click="this.toggleUnfoldAll">
-                            <i class="oi oi-fw me-1" t-att-data-icon="this.state.unfoldAll ? 'unfold_less' : 'unfold_more'"/>
-                            <t t-out="this.state.unfoldAll ? 'Fold All' : 'Unfold All'"/>
-                        </button>
-
-                        <button t-if="!this.state.report.report_handler || this.state.report.report_handler === 'generic'"
-                                class="btn btn-sm"
-                                t-att-class="this.state.comparisonEnabled ? 'btn-primary' : 'btn-secondary'"
-                                t-on-click="this.toggleComparison">
-                            <i class="oi oi-fw me-1" data-icon="percent"/>Comparison
-                        </button>
-
-                        <i t-if="this.state.isLoading" class="oi oi-spin ms-2 text-muted" data-icon="autorenew" title="Loading..."/>
-
-                        <span class="ms-auto d-flex gap-2">
-                            <button class="btn btn-secondary btn-sm" t-on-click="this.exportPdf">
-                                <i class="oi oi-fw me-1" data-icon="picture_as_pdf"/>PDF
-                            </button>
-                            <button class="btn btn-secondary btn-sm" t-on-click="this.exportXlsx">
-                                <i class="oi oi-fw me-1" data-icon="table_view"/>Excel
-                            </button>
-                        </span>
                     </div>
 
-                    <div t-if="this.state.report.has_unposted_entries" class="alert alert-info mb-0 rounded-0 py-2 text-center">
-                        There are unposted Journal Entries prior or included in this period.
+                    <!-- Clean, Streamlined Odoo 20 Toolbar -->
+                    <div class="o_account_reports_community_v2_toolbar d-flex align-items-center justify-content-between px-3 py-2 border-bottom bg-view flex-wrap gap-2">
+                        
+                        <!-- Left Controls: Logical Dropdown Groups -->
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            
+                            <!-- 1. Date Range Popover Button -->
+                            <span class="position-relative">
+                                <button class="btn btn-sm d-flex align-items-center gap-1 o_account_reports_filter_btn"
+                                        t-att-class="{ 'active': this.state.dateMenuOpen }"
+                                        t-on-click="this.toggleDateMenu">
+                                    <i class="oi oi-fw me-1" data-icon="calendar_today"/>
+                                    <span class="fw-medium" t-out="this.dateFilterLabel"/>
+                                    <i class="oi oi-fw ms-1 small" data-icon="arrow_drop_down"/>
+                                </button>
+                                <div t-if="this.state.dateMenuOpen"
+                                     class="o_account_reports_date_popover dropdown-menu show position-absolute p-3 shadow-lg">
+                                    <div class="row g-3">
+                                        <div class="col-6 border-end pe-3">
+                                            <div class="text-uppercase text-muted fw-bold small mb-2" style="font-size: 0.72rem;">Presets</div>
+                                            <div class="d-flex flex-column gap-1">
+                                                <a href="#" class="dropdown-item py-1 rounded"
+                                                   t-att-class="{ 'active fw-bold': this.state.activeDatePreset === 'today' }"
+                                                   t-on-click.prevent="() => this.applyDatePreset('today')">Today</a>
+                                                <a href="#" class="dropdown-item py-1 rounded"
+                                                   t-att-class="{ 'active fw-bold': this.state.activeDatePreset === 'this_month' }"
+                                                   t-on-click.prevent="() => this.applyDatePreset('this_month')">This Month</a>
+                                                <a href="#" class="dropdown-item py-1 rounded"
+                                                   t-att-class="{ 'active fw-bold': this.state.activeDatePreset === 'this_quarter' }"
+                                                   t-on-click.prevent="() => this.applyDatePreset('this_quarter')">This Quarter</a>
+                                                <a href="#" class="dropdown-item py-1 rounded"
+                                                   t-att-class="{ 'active fw-bold': this.state.activeDatePreset === 'this_year' }"
+                                                   t-on-click.prevent="() => this.applyDatePreset('this_year')">This Year</a>
+                                                <div class="dropdown-divider my-1"/>
+                                                <a href="#" class="dropdown-item py-1 rounded"
+                                                   t-att-class="{ 'active fw-bold': this.state.activeDatePreset === 'last_month' }"
+                                                   t-on-click.prevent="() => this.applyDatePreset('last_month')">Last Month</a>
+                                                <a href="#" class="dropdown-item py-1 rounded"
+                                                   t-att-class="{ 'active fw-bold': this.state.activeDatePreset === 'last_quarter' }"
+                                                   t-on-click.prevent="() => this.applyDatePreset('last_quarter')">Last Quarter</a>
+                                                <a href="#" class="dropdown-item py-1 rounded"
+                                                   t-att-class="{ 'active fw-bold': this.state.activeDatePreset === 'last_year' }"
+                                                   t-on-click.prevent="() => this.applyDatePreset('last_year')">Last Year</a>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 ps-2 d-flex flex-column justify-content-between">
+                                            <div>
+                                                <div class="text-uppercase text-muted fw-bold small mb-2" style="font-size: 0.72rem;">Custom Range</div>
+                                                <div t-if="this.state.report.report_handler !== 'aged_partner_balance'" class="mb-2">
+                                                    <label class="form-label small text-muted mb-1">From</label>
+                                                    <input type="date" class="form-control form-control-sm" t-att-value="this.state.dateFrom" t-on-change="this.onDateFromChange"/>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label small text-muted mb-1">
+                                                        <t t-out="this.state.report.report_handler === 'aged_partner_balance' ? 'As of' : 'To'"/>
+                                                    </label>
+                                                    <input type="date" class="form-control form-control-sm" t-att-value="this.state.dateTo" t-on-change="this.onDateToChange"/>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-primary btn-sm w-100 mt-2" t-on-click="this.closeDateMenu">
+                                                Apply
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </span>
+
+                            <!-- 2. Comparison Dropdown -->
+                            <span t-if="!this.state.report.report_handler || this.state.report.report_handler === 'generic'" class="position-relative">
+                                <button class="btn btn-sm d-flex align-items-center gap-1 o_account_reports_filter_btn"
+                                        t-att-class="{ 'active': this.state.comparisonEnabled || this.state.comparisonMenuOpen }"
+                                        t-on-click="this.toggleComparisonMenu">
+                                    <i class="oi oi-fw me-1" data-icon="tune"/>
+                                    <t t-out="this.comparisonFilterLabel"/>
+                                    <i class="oi oi-fw ms-1 small" data-icon="arrow_drop_down"/>
+                                </button>
+                                <div t-if="this.state.comparisonMenuOpen"
+                                     class="o_account_reports_community_v2_menu dropdown-menu show position-absolute shadow-sm" style="min-width: 220px;">
+                                    <a href="#" class="dropdown-item" t-att-class="{ active: !this.state.comparisonEnabled }"
+                                       t-on-click.prevent="() => this.selectComparison(0)">No Comparison</a>
+                                    <div class="dropdown-divider my-1"/>
+                                    <h6 class="dropdown-header text-uppercase small text-muted py-1" style="font-size: 0.72rem;">Sequential Periods</h6>
+                                    <a href="#" class="dropdown-item" t-att-class="{ active: this.state.comparisonEnabled and this.state.comparisonCount === 1 and this.state.comparisonType === 'previous_period' }"
+                                       t-on-click.prevent="() => this.selectComparison(1, 'previous_period')">1 Previous Period</a>
+                                    <a href="#" class="dropdown-item" t-att-class="{ active: this.state.comparisonEnabled and this.state.comparisonCount === 2 and this.state.comparisonType === 'previous_period' }"
+                                       t-on-click.prevent="() => this.selectComparison(2, 'previous_period')">2 Previous Periods</a>
+                                    <a href="#" class="dropdown-item" t-att-class="{ active: this.state.comparisonEnabled and this.state.comparisonCount === 3 and this.state.comparisonType === 'previous_period' }"
+                                       t-on-click.prevent="() => this.selectComparison(3, 'previous_period')">3 Previous Periods</a>
+                                    <a href="#" class="dropdown-item" t-att-class="{ active: this.state.comparisonEnabled and this.state.comparisonCount === 4 and this.state.comparisonType === 'previous_period' }"
+                                       t-on-click.prevent="() => this.selectComparison(4, 'previous_period')">4 Quarters / Periods</a>
+                                    <div class="dropdown-divider my-1"/>
+                                    <h6 class="dropdown-header text-uppercase small text-muted py-1" style="font-size: 0.72rem;">Year over Year</h6>
+                                    <a href="#" class="dropdown-item" t-att-class="{ active: this.state.comparisonEnabled and this.state.comparisonType === 'same_period_last_year' }"
+                                       t-on-click.prevent="() => this.selectComparison(1, 'same_period_last_year')">Same Period Last Year (YoY)</a>
+                                </div>
+                            </span>
+
+                            <!-- 3. Dynamic Group By Dropdown -->
+                            <span t-if="!this.isPartnerBasedReport and this.state.report.report_handler !== 'tax_report'" class="position-relative">
+                                <button class="btn btn-sm d-flex align-items-center gap-1 o_account_reports_filter_btn"
+                                        t-att-class="{ 'active': this.state.selectedGroupBy !== 'default' || this.state.groupByMenuOpen }"
+                                        t-on-click="this.toggleGroupByMenu">
+                                    <i class="oi oi-fw me-1" data-icon="view_list"/>
+                                    <t t-out="this.groupByFilterLabel"/>
+                                    <i class="oi oi-fw ms-1 small" data-icon="arrow_drop_down"/>
+                                </button>
+                                <div t-if="this.state.groupByMenuOpen"
+                                     class="o_account_reports_community_v2_menu dropdown-menu show position-absolute shadow-sm" style="min-width: 190px;">
+                                    <a href="#" class="dropdown-item" t-att-class="{ active: this.state.selectedGroupBy === 'default' }"
+                                       t-on-click.prevent="() => this.selectGroupBy('default')">Default (Accounts)</a>
+                                    <a href="#" class="dropdown-item" t-att-class="{ active: this.state.selectedGroupBy === 'partner_id' }"
+                                       t-on-click.prevent="() => this.selectGroupBy('partner_id')">Group by Partner</a>
+                                    <a href="#" class="dropdown-item" t-att-class="{ active: this.state.selectedGroupBy === 'journal_id' }"
+                                       t-on-click.prevent="() => this.selectGroupBy('journal_id')">Group by Journal</a>
+                                </div>
+                            </span>
+
+                            <!-- 4. Journals Dropdown -->
+                            <span class="position-relative">
+                                <button class="btn btn-sm d-flex align-items-center gap-1 o_account_reports_filter_btn"
+                                        t-att-class="{ 'active': this.state.journalIds.length > 0 || this.state.journalMenuOpen }"
+                                        t-on-click="this.toggleJournalMenu">
+                                    <i class="oi oi-fw me-1" data-icon="book"/>
+                                    <t t-out="this.journalFilterLabel"/>
+                                    <i class="oi oi-fw ms-1 small" data-icon="arrow_drop_down"/>
+                                </button>
+                                <div t-if="this.state.journalMenuOpen"
+                                     class="o_account_reports_community_v2_menu o_account_reports_community_v2_menu_scrollable dropdown-menu show position-absolute p-2 shadow-sm">
+                                    <div class="d-flex align-items-center justify-content-between px-2 pb-2 mb-1 border-bottom small">
+                                        <a href="#" class="text-decoration-none fw-semibold" t-on-click.prevent="this.selectAllJournals">Select All</a>
+                                        <a href="#" class="text-decoration-none text-muted" t-on-click.prevent="this.clearAllJournals">Clear</a>
+                                    </div>
+                                    <div t-foreach="this.state.availableJournals" t-as="journal" t-key="journal.id"
+                                         class="form-check py-1">
+                                        <input type="checkbox" class="form-check-input"
+                                               t-att-id="'journal_' + journal.id"
+                                               t-att-checked="this.state.journalIds.includes(journal.id)"
+                                               t-on-change="() => this.toggleJournal(journal.id)"/>
+                                        <label class="form-check-label cursor-pointer" t-att-for="'journal_' + journal.id" t-out="journal.name"/>
+                                    </div>
+                                </div>
+                            </span>
+
+                            <!-- 5. Partners Dropdown (for partner ledger / aged balance) -->
+                            <span t-if="this.isPartnerBasedReport" class="position-relative">
+                                <button class="btn btn-sm d-flex align-items-center gap-1 o_account_reports_filter_btn"
+                                        t-att-class="{ 'active': this.state.partnerIds.length > 0 || this.state.partnerMenuOpen }"
+                                        t-on-click="this.togglePartnerMenu">
+                                    <i class="oi oi-fw me-1" data-icon="group"/>
+                                    <t t-out="this.partnerFilterLabel"/>
+                                    <i class="oi oi-fw ms-1 small" data-icon="arrow_drop_down"/>
+                                </button>
+                                <div t-if="this.state.partnerMenuOpen"
+                                     class="o_account_reports_community_v2_menu o_account_reports_community_v2_menu_scrollable dropdown-menu show position-absolute p-2 shadow-sm">
+                                    <input type="text" class="form-control form-control-sm mb-2" placeholder="Search partners..."
+                                           t-on-input="this.onPartnerFilterQueryInput"/>
+                                    <div t-foreach="this.filteredAvailablePartners" t-as="partner" t-key="partner.id"
+                                         class="form-check py-1">
+                                        <input type="checkbox" class="form-check-input"
+                                               t-att-id="'partner_' + partner.id"
+                                               t-att-checked="this.state.partnerIds.includes(partner.id)"
+                                               t-on-change="() => this.togglePartnerFilter(partner.id)"/>
+                                        <label class="form-check-label cursor-pointer" t-att-for="'partner_' + partner.id" t-out="partner.name"/>
+                                    </div>
+                                </div>
+                            </span>
+
+                            <!-- 6. Currency Dropdown (if multi-currency) -->
+                            <span t-if="this.state.availableCurrencies.length > 1" class="position-relative">
+                                <button class="btn btn-sm d-flex align-items-center gap-1 o_account_reports_filter_btn"
+                                        t-att-class="{ 'active': this.state.currencyMenuOpen }"
+                                        t-on-click="this.toggleCurrencyMenu">
+                                    <i class="oi oi-fw me-1" data-icon="payments"/>
+                                    <t t-out="this.currencyFilterLabel"/>
+                                    <i class="oi oi-fw ms-1 small" data-icon="arrow_drop_down"/>
+                                </button>
+                                <div t-if="this.state.currencyMenuOpen"
+                                     class="o_account_reports_community_v2_menu dropdown-menu show position-absolute shadow-sm">
+                                    <a t-foreach="this.state.availableCurrencies" t-as="currency" t-key="currency.id"
+                                       href="#" class="dropdown-item"
+                                       t-att-class="{ active: this.state.currencyId === currency.id }"
+                                       t-on-click.prevent="() => this.selectCurrency(currency.id)"
+                                       t-out="currency.name"/>
+                                </div>
+                            </span>
+
+                            <!-- 7. Options Dropdown (Unposted, Percentages, Unfold) -->
+                            <span class="position-relative">
+                                <button class="btn btn-sm d-flex align-items-center gap-1 o_account_reports_filter_btn"
+                                        t-att-class="{ 'active': this.activeOptionsCount > 0 || this.state.optionsMenuOpen }"
+                                        t-on-click="this.toggleOptionsMenu">
+                                    <i class="oi oi-fw me-1" data-icon="settings"/>
+                                    <span>Options</span>
+                                    <span t-if="this.activeOptionsCount > 0" class="badge rounded-pill bg-primary ms-1" style="font-size: 0.65rem;" t-out="this.activeOptionsCount"/>
+                                    <i class="oi oi-fw ms-1 small" data-icon="arrow_drop_down"/>
+                                </button>
+                                <div t-if="this.state.optionsMenuOpen"
+                                     class="o_account_reports_community_v2_menu dropdown-menu show position-absolute p-2 shadow-sm" style="min-width: 220px;">
+                                    <div class="dropdown-item d-flex align-items-center justify-content-between py-1 cursor-pointer"
+                                         t-on-click="this.toggleAllEntries">
+                                        <span>Include Unposted</span>
+                                        <input type="checkbox" class="form-check-input ms-2" t-att-checked="this.state.allEntries" style="pointer-events: none;"/>
+                                    </div>
+                                    <div t-if="!this.state.report.report_handler || this.state.report.report_handler === 'generic'"
+                                         class="dropdown-item d-flex align-items-center justify-content-between py-1 cursor-pointer"
+                                         t-on-click="this.togglePercentages">
+                                        <span>Show Percentages</span>
+                                        <input type="checkbox" class="form-check-input ms-2" t-att-checked="this.state.showPercentages" style="pointer-events: none;"/>
+                                    </div>
+                                    <div class="dropdown-divider my-1"/>
+                                    <a href="#" class="dropdown-item py-1 d-flex align-items-center gap-2" t-on-click.prevent="this.toggleUnfoldAll">
+                                        <i class="oi oi-fw" t-att-data-icon="this.state.unfoldAll ? 'unfold_less' : 'unfold_more'"/>
+                                        <t t-out="this.state.unfoldAll ? 'Fold All Lines' : 'Unfold All Lines'"/>
+                                    </a>
+                                </div>
+                            </span>
+
+                            <i t-if="this.state.isLoading" class="oi oi-spin text-muted ms-1" data-icon="autorenew" title="Loading..."/>
+                        </div>
+
+                        <!-- Right Controls: Search & Exports -->
+                        <div class="d-flex align-items-center gap-2">
+                            <div t-if="!this.isPartnerBasedReport" class="o_account_reports_search_wrapper position-relative">
+                                <i class="oi oi-fw position-absolute top-50 start-0 translate-middle-y ms-2 text-muted small" data-icon="search" style="pointer-events: none;"/>
+                                <input type="text" class="form-control form-control-sm ps-4 pe-2 o_account_reports_search_input"
+                                       t-att-placeholder="this.searchPlaceholder"
+                                       t-att-value="this.state.search"
+                                       t-on-input="this.onSearchInput"/>
+                            </div>
+
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary" t-on-click="this.exportPdf" title="Export to PDF">
+                                    <i class="oi oi-fw me-1" data-icon="picture_as_pdf"/>PDF
+                                </button>
+                                <button class="btn btn-outline-secondary" t-on-click="this.exportXlsx" title="Export to Excel">
+                                    <i class="oi oi-fw me-1" data-icon="table_view"/>Excel
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Subtle, Dismissible Unposted Warning Banner -->
+                    <div t-if="this.state.report.has_unposted_entries and !this.state.dismissUnpostedWarning"
+                         class="o_account_reports_unposted_banner d-flex align-items-center justify-content-between px-3 py-1 bg-warning-subtle text-warning-emphasis border-bottom small">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="oi oi-fw text-warning" data-icon="warning"/>
+                            <span>There are unposted Journal Entries prior or included in this period.</span>
+                        </div>
+                        <button type="button" class="btn-close btn-close-sm" style="font-size: 0.65rem;"
+                                aria-label="Dismiss" t-on-click="() => this.state.dismissUnpostedWarning = true"/>
                     </div>
 
                     <div class="container-fluid">
-                        <h4 class="mt-3 mb-3" t-out="this.state.report.report_name"/>
+                        <div class="d-flex align-items-center justify-content-between mt-3 mb-3">
+                            <h4 class="mb-0 fw-semibold text-dark" t-out="this.state.report.report_name"/>
+                            <span t-if="this.state.report.currency" class="badge bg-light text-muted border fw-normal px-2 py-1">
+                                Currency: <b class="text-dark" t-out="this.state.report.currency.symbol"/>
+                            </span>
+                        </div>
 
-                        <table t-if="!this.state.report.report_handler || this.state.report.report_handler === 'generic'"
-                               class="table table-sm table-hover o_account_reports_community_v2_table">
-                            <thead>
-                                <tr t-if="this.state.report.periods.length > 1">
-                                    <th/>
-                                    <t t-foreach="this.state.report.periods" t-as="period" t-key="period_index">
-                                        <th class="text-center" t-att-colspan="this.state.report.columns.length" t-out="period.label"/>
-                                    </t>
-                                </tr>
-                                <tr>
-                                    <th>Name</th>
-                                    <t t-foreach="this.state.report.periods" t-as="period" t-key="period_index">
-                                        <t t-foreach="this.state.report.columns" t-as="column" t-key="column.expression_label">
-                                            <th class="text-end" t-out="column.name"/>
+                        <!-- Generic Report Table (Trial Balance / Balance Sheet / P&L / Cash Flow) -->
+                        <div class="table-responsive o_account_reports_community_v2_table_container">
+                            <table t-if="!this.state.report.report_handler || this.state.report.report_handler === 'generic'"
+                                   class="table table-sm table-hover o_account_reports_community_v2_table">
+                                <thead>
+                                    <tr t-if="this.state.report.periods.length > 1">
+                                        <th class="sticky-col"/>
+                                        <t t-foreach="this.state.report.periods" t-as="period" t-key="period_index">
+                                            <th class="text-center" t-att-colspan="this.state.report.columns.length * (this.state.showPercentages ? 2 : 1)" t-out="period.label"/>
                                         </t>
-                                    </t>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-call="account_reports_community_v2.ReportLines" lines="this.state.report.lines"/>
-                            </tbody>
-                        </table>
+                                        <th class="text-center" colspan="3">Variance</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="sticky-col">Name</th>
+                                        <t t-foreach="this.state.report.periods" t-as="period" t-key="period_index">
+                                            <t t-foreach="this.state.report.columns" t-as="column" t-key="column.expression_label">
+                                                <th class="text-end" t-out="column.name"/>
+                                                <th t-if="this.state.showPercentages" class="text-end text-muted small">% of Total</th>
+                                            </t>
+                                        </t>
+                                        <t t-if="this.state.report.periods.length > 1">
+                                            <th class="text-end">Amount Δ</th>
+                                            <th class="text-end">Var %</th>
+                                            <th class="text-center" style="width: 65px;">Trend</th>
+                                        </t>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-call="account_reports_community_v2.ReportLines" lines="this.state.report.lines"/>
+                                </tbody>
+                            </table>
 
-                        <table t-elif="this.state.report.report_handler === 'general_ledger'"
-                               class="table table-sm table-hover o_account_reports_community_v2_table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Journal Entry</th>
-                                    <th>Partner</th>
-                                    <th>Label</th>
-                                    <th class="text-end">Debit</th>
-                                    <th class="text-end">Credit</th>
-                                    <th class="text-end">Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-call="account_reports_community_v2.GeneralLedgerLines" lines="this.state.report.lines"/>
-                            </tbody>
-                        </table>
+                            <table t-elif="this.state.report.report_handler === 'general_ledger'"
+                                   class="table table-sm table-hover o_account_reports_community_v2_table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Journal Entry</th>
+                                        <th>Partner</th>
+                                        <th>Label</th>
+                                        <th class="text-end">Debit</th>
+                                        <th class="text-end">Credit</th>
+                                        <th class="text-end">Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-call="account_reports_community_v2.GeneralLedgerLines" lines="this.state.report.lines"/>
+                                </tbody>
+                            </table>
 
-                        <table t-elif="this.state.report.report_handler === 'partner_ledger'"
-                               class="table table-sm table-hover o_account_reports_community_v2_table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Journal Entry</th>
-                                    <th>Account</th>
-                                    <th>Label</th>
-                                    <th class="text-end">Debit</th>
-                                    <th class="text-end">Credit</th>
-                                    <th class="text-end">Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-call="account_reports_community_v2.PartnerLedgerLines" lines="this.state.report.lines"/>
-                            </tbody>
-                        </table>
+                            <table t-elif="this.state.report.report_handler === 'partner_ledger'"
+                                   class="table table-sm table-hover o_account_reports_community_v2_table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Journal Entry</th>
+                                        <th>Account</th>
+                                        <th>Label</th>
+                                        <th class="text-end">Debit</th>
+                                        <th class="text-end">Credit</th>
+                                        <th class="text-end">Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-call="account_reports_community_v2.PartnerLedgerLines" lines="this.state.report.lines"/>
+                                </tbody>
+                            </table>
 
-                        <table t-elif="this.state.report.report_handler === 'aged_partner_balance'"
-                               class="table table-sm table-hover o_account_reports_community_v2_table">
-                            <thead>
-                                <tr>
-                                    <th>Partner</th>
-                                    <t t-foreach="this.state.report.bucket_columns" t-as="bucket" t-key="bucket.key">
-                                        <th class="text-end" t-out="bucket.label"/>
-                                    </t>
-                                    <th class="text-end">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-call="account_reports_community_v2.AgedPartnerBalanceLines" lines="this.state.report.lines"/>
-                            </tbody>
-                        </table>
+                            <table t-elif="this.state.report.report_handler === 'aged_partner_balance'"
+                                   class="table table-sm table-hover o_account_reports_community_v2_table">
+                                <thead>
+                                    <tr>
+                                        <th>Partner</th>
+                                        <t t-foreach="this.state.report.bucket_columns" t-as="bucket" t-key="bucket.key">
+                                            <th class="text-end" t-out="bucket.label"/>
+                                        </t>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-call="account_reports_community_v2.AgedPartnerBalanceLines" lines="this.state.report.lines"/>
+                                </tbody>
+                            </table>
 
-                        <table t-elif="this.state.report.report_handler === 'tax_report'"
-                               class="table table-sm table-hover o_account_reports_community_v2_table">
-                            <thead>
-                                <tr>
-                                    <th>Tax</th>
-                                    <th class="text-end">Base Amount</th>
-                                    <th class="text-end">Tax Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-call="account_reports_community_v2.TaxReportLines" lines="this.state.report.lines"/>
-                            </tbody>
-                        </table>
+                            <table t-elif="this.state.report.report_handler === 'tax_report'"
+                                   class="table table-sm table-hover o_account_reports_community_v2_table">
+                                <thead>
+                                    <tr>
+                                        <th>Tax</th>
+                                        <th class="text-end">Base Amount</th>
+                                        <th class="text-end">Tax Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-call="account_reports_community_v2.TaxReportLines" lines="this.state.report.lines"/>
+                                </tbody>
+                            </table>
 
-                        <table t-elif="this.state.report.report_handler === 'journal_report'"
-                               class="table table-sm table-hover o_account_reports_community_v2_table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Journal Entry</th>
-                                    <th>Account</th>
-                                    <th>Label</th>
-                                    <th class="text-end">Debit</th>
-                                    <th class="text-end">Credit</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-call="account_reports_community_v2.JournalReportLines" lines="this.state.report.lines"/>
-                            </tbody>
-                        </table>
-
-                        <div t-else="" class="text-center p-4 text-muted">
-                            Unknown report handler: <t t-out="this.state.report.report_handler"/>
+                            <table t-elif="this.state.report.report_handler === 'journal_report'"
+                                   class="table table-sm table-hover o_account_reports_community_v2_table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Journal Entry</th>
+                                        <th>Account</th>
+                                        <th>Partner</th>
+                                        <th>Label</th>
+                                        <th class="text-end">Debit</th>
+                                        <th class="text-end">Credit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-call="account_reports_community_v2.JournalReportLines" lines="this.state.report.lines"/>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -237,8 +403,8 @@
 
     <t t-name="account_reports_community_v2.ReportLines">
         <t t-foreach="lines || []" t-as="line" t-key="line.id">
-            <tr>
-                <td t-attf-style="padding-left: {{line.level * 16}}px">
+            <tr t-att-class="{ 'fw-bold': line.level === 0 }">
+                <td class="sticky-col" t-attf-style="padding-left: {{line.level * 16}}px; {{ this.state.openMenuLineId === line.id ? 'z-index: 1060 !important;' : '' }}">
                     <span t-if="line.foldable"
                           class="o_account_reports_community_v2_caret"
                           t-att-title="line.unfolded ? 'Collapse' : 'Expand'"
@@ -253,44 +419,73 @@
                     <t t-elif="line.account_id">
                         <a href="#" class="text-decoration-none text-body" title="View Account" t-on-click.prevent="() => this.onOpenAccount(line)" t-out="line.name"/>
                     </t>
+                    <t t-elif="line.partner_id">
+                        <a href="#" class="text-decoration-none text-body" title="View Partner" t-on-click.prevent="() => this.onOpenPartner(line)" t-out="line.name"/>
+                    </t>
                     <t t-else="" t-out="line.name"/>
+
+                    <!-- Action kebab for accounts -->
                     <span t-if="line.account_id" class="o_account_reports_community_v2_kebab_wrapper position-relative ms-1">
                         <span class="o_account_reports_community_v2_kebab" t-on-click.stop="() => this.toggleMenu(line)" title="More Options">
                             <i class="oi oi-fw" data-icon="more_vert"/>
                         </span>
                         <div t-if="this.state.openMenuLineId === line.id"
                              class="o_account_reports_community_v2_menu dropdown-menu show position-absolute">
-                            <a href="#" class="dropdown-item" title="Open General Ledger for this account" t-on-click.prevent="() => this.onOpenGeneralLedger(line)">
-                                General Ledger
+                            <a href="#" class="dropdown-item py-1 px-3 d-flex align-items-center gap-2" title="Open General Ledger for this account" t-on-click.prevent="() => this.onOpenGeneralLedger(line)">
+                                <i class="oi oi-fw small text-muted" data-icon="book"/>
+                                <span>General Ledger</span>
                             </a>
-                            <a href="#" class="dropdown-item" title="View all journal items for this account" t-on-click.prevent="() => this.onOpenJournalItems(line)">
-                                Journal Items
+                            <a href="#" class="dropdown-item py-1 px-3 d-flex align-items-center gap-2" title="View all journal items for this account" t-on-click.prevent="() => this.onOpenJournalItems(line)">
+                                <i class="oi oi-fw small text-muted" data-icon="list_alt"/>
+                                <span>Journal Items</span>
+                            </a>
+                        </div>
+                    </span>
+
+                    <!-- Action kebab for partners -->
+                    <span t-if="line.partner_id" class="o_account_reports_community_v2_kebab_wrapper position-relative ms-1">
+                        <span class="o_account_reports_community_v2_kebab" t-on-click.stop="() => this.toggleMenu(line)" title="More Options">
+                            <i class="oi oi-fw" data-icon="more_vert"/>
+                        </span>
+                        <div t-if="this.state.openMenuLineId === line.id"
+                             class="o_account_reports_community_v2_menu dropdown-menu show position-absolute">
+                            <a href="#" class="dropdown-item py-1 px-3 d-flex align-items-center gap-2" title="View all journal items for this partner" t-on-click.prevent="() => this.onOpenPartnerJournalItems(line)">
+                                <i class="oi oi-fw small text-muted" data-icon="list_alt"/>
+                                <span>Partner Journal Items</span>
                             </a>
                         </div>
                     </span>
                 </td>
+
+                <!-- Period Columns and Percentages -->
                 <t t-foreach="line.periods" t-as="period" t-key="period_index">
                     <t t-foreach="period.columns" t-as="column" t-key="column.expression_label">
                         <td class="text-end o_account_reports_community_v2_cell"
                             t-on-click="() => this.onCellClick(line, column, period)"
                             t-out="column.value != null ? this.formatAmount(column.value) : ''"/>
+                        <td t-if="this.state.showPercentages" class="text-end text-muted small"
+                            t-out="column.percent_of_total != null ? (column.percent_of_total + '%') : ''"/>
                     </t>
+                </t>
+
+                <!-- Variance & Sparkline Columns when comparison periods exist -->
+                <t t-if="this.state.report.periods.length > 1">
+                    <td class="text-end" t-out="line.variance_amount != null ? this.formatAmount(line.variance_amount) : ''"/>
+                    <td class="text-end">
+                        <span t-if="line.variance_percent != null"
+                              class="badge px-2 py-1 rounded-pill"
+                              t-att-class="line.variance_percent &gt;= 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'"
+                              t-out="this.formatPercent(line.variance_percent)"/>
+                    </td>
+                    <td class="text-center align-middle">
+                        <svg t-if="line.sparkline_data and line.sparkline_data.length &gt; 1"
+                             class="o_account_reports_sparkline" width="50" height="16">
+                            <polyline t-att-points="this.getSparklinePoints(line.sparkline_data)"/></svg>
+                    </td>
                 </t>
             </tr>
             <t t-if="line.unfolded &amp;&amp; line.children &amp;&amp; line.children.length" t-call="account_reports_community_v2.ReportLines" lines="line.children"/>
         </t>
     </t>
-
-    <!--
-        General Ledger's, Partner Ledger's, and Aged Receivable/Payable's
-        row templates (account_reports_community_v2.GeneralLedgerLines,
-        .PartnerLedgerLines, .AgedPartnerBalanceLines) live in
-        general_ledger_table.xml, partner_ledger_table.xml, and
-        aged_balance_table.xml respectively - split out purely for file
-        size/readability. t-call resolves templates by name across the
-        whole bundle regardless of which file registers them, so this is a
-        no-op for runtime behavior; it just keeps this file down to the
-        shell + the generic (Trial Balance/Balance Sheet/P&L) case.
-    -->
 
 </templates>

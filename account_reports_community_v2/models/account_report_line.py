@@ -70,26 +70,12 @@ class AccountReportLine(models.Model):
             })
         return periods
 
-    def _compute_periods_by_account(self, options_list, account_ids):
-        """Batched counterpart to calling _compute_periods(extra_domain=...)
-        once per account: evaluates every column's expression once across
-        *all* account_ids per period (one query each, via
-        account.report.expression._evaluate_batch_by_account), instead of
-        once per account. For a category with a few hundred accounts and a
-        handful of columns, that's the difference between a handful of
-        queries and hundreds.
-
-        :return: {account_id: [period_dict, ...]} on success, or None if
-        any column's expression can't be batched (anything other
-        than the 'domain' engine) - the caller should then fall
-        back to _compute_periods() once per account, which stays
-        correct either way, just slower.
-        """
+    def _compute_periods_by_field(self, options_list, field_name, record_ids):
+        """Generic batched computation across any field (account_id, partner_id, journal_id)."""
         self.ensure_one()
         columns = self.report_id.column_ids.sorted('sequence')
+        method_name = f'_evaluate_batch_by_{field_name.replace("_id", "")}'
 
-        # values_by_period[i][expression_label] = {account_id: value}, one
-        # entry per period in options_list.
         values_by_period = []
         for options in options_list:
             values_by_label = {}
@@ -98,14 +84,15 @@ class AccountReportLine(models.Model):
                 if not expression:
                     values_by_label[column.expression_label] = {}
                     continue
-                batch = expression[0]._evaluate_batch_by_account(options, account_ids)
+                batch_method = getattr(expression[0], method_name, None)
+                batch = batch_method(options, record_ids) if batch_method else None
                 if batch is None:
                     return None
                 values_by_label[column.expression_label] = batch
             values_by_period.append(values_by_label)
 
         result = {}
-        for account_id in account_ids:
+        for rec_id in record_ids:
             periods = []
             for options, values_by_label in zip(options_list, values_by_period):
                 periods.append({
@@ -115,31 +102,31 @@ class AccountReportLine(models.Model):
                     'columns': [
                         {
                             'expression_label': column.expression_label,
-                            'value': values_by_label[column.expression_label].get(account_id, 0.0),
+                            'value': values_by_label[column.expression_label].get(rec_id, 0.0),
                         }
                         for column in columns
                     ],
                 })
-            result[account_id] = periods
+            result[rec_id] = periods
         return result
+
+    def _compute_periods_by_account(self, options_list, account_ids):
+        return self._compute_periods_by_field(options_list, 'account_id', account_ids)
 
     def _build_groupby_row(self, options_list):
         """Used both by Trial Balance's single top-level "Accounts" line
         (foldable=False, always expanded - it IS the account-level report)
         and by Balance Sheet/P&L leaf lines (foldable=True), which stay
         collapsed to a single category total by default and expand into
-        their constituent accounts - each carrying its own `account_id`,
-        which is what makes the General Ledger/Journal Items drill-down menu
-        appear on them, same as it does for Trial Balance's account rows.
+        their constituent accounts, partners, or journals based on selected_groupby.
         """
         self.ensure_one()
-        if self.groupby != 'account_id':
-            raise UserError(_(
-                "Report line '%s' uses groupby '%s', which isn't supported yet "
-                "(only 'account_id' is implemented).", self.name, self.groupby,
-            ))
-
         main_options = options_list[0]
+        selected_groupby = main_options.get('selected_groupby')
+        # If user explicitly selected a groupby (e.g., partner_id or journal_id), use it;
+        # otherwise fall back to the line's defined groupby.
+        groupby_dim = selected_groupby if selected_groupby in ('partner_id', 'journal_id') else (self.groupby or 'account_id')
+
         unfold_all = bool(main_options.get('unfold_all') or main_options.get('export_mode'))
         # Trial Balance is meant to show accounts directly (always unfolded)
         tb_ref = self.env.ref('account_reports_community_v2.trial_balance_report', raise_if_not_found=False)
@@ -154,34 +141,87 @@ class AccountReportLine(models.Model):
 
         children = []
         if unfolded:
-            account_domain = []
             search = main_options.get('search')
-            if search:
-                account_domain += ['|', ('code', 'ilike', search), ('name', 'ilike', search)]
+            if groupby_dim == 'partner_id':
+                partner_domain = [('company_id', 'in', (False, self.env.companies.ids))]
+                if search:
+                    partner_domain += [('name', 'ilike', search)]
+                partners = self.env['res.partner'].search(partner_domain, order='name', limit=200)
+                batched_periods = self._compute_periods_by_field(options_list, 'partner_id', partners.ids)
+                for partner in partners:
+                    if batched_periods is not None:
+                        periods = batched_periods[partner.id]
+                    else:
+                        periods = self._compute_periods(options_list, extra_domain=[('partner_id', '=', partner.id)])
+                    has_value = any(col['value'] for period in periods for col in period['columns'])
+                    if has_value:
+                        children.append({
+                            'id': f'{self.id}-partner-{partner.id}',
+                            'real_line_id': self.id,
+                            'partner_id': partner.id,
+                            'name': partner.name or f"Partner #{partner.id}",
+                            'code': partner.ref or '',
+                            'level': self.hierarchy_level + 1,
+                            'foldable': False,
+                            'unfolded': True,
+                            'has_children': False,
+                            'periods': periods,
+                            'children': [],
+                        })
+            elif groupby_dim == 'journal_id':
+                journal_domain = [('company_id', 'in', self.env.companies.ids)]
+                if search:
+                    journal_domain += ['|', ('code', 'ilike', search), ('name', 'ilike', search)]
+                journals = self.env['account.journal'].search(journal_domain, order='sequence, name')
+                batched_periods = self._compute_periods_by_field(options_list, 'journal_id', journals.ids)
+                for journal in journals:
+                    if batched_periods is not None:
+                        periods = batched_periods[journal.id]
+                    else:
+                        periods = self._compute_periods(options_list, extra_domain=[('journal_id', '=', journal.id)])
+                    has_value = any(col['value'] for period in periods for col in period['columns'])
+                    if has_value:
+                        children.append({
+                            'id': f'{self.id}-journal-{journal.id}',
+                            'real_line_id': self.id,
+                            'journal_id': journal.id,
+                            'name': f'[{journal.code}] {journal.name}',
+                            'code': journal.code,
+                            'level': self.hierarchy_level + 1,
+                            'foldable': False,
+                            'unfolded': True,
+                            'has_children': False,
+                            'periods': periods,
+                            'children': [],
+                        })
+            else:
+                account_domain = []
+                if search:
+                    account_domain += ['|', ('code', 'ilike', search), ('name', 'ilike', search)]
 
-            accounts = self.env['account.account'].search(account_domain, order='code')
-            batched_periods = self._compute_periods_by_account(options_list, accounts.ids)
+                accounts = self.env['account.account'].search(account_domain, order='code')
+                batched_periods = self._compute_periods_by_account(options_list, accounts.ids)
 
-            for account in accounts:
-                if batched_periods is not None:
-                    periods = batched_periods[account.id]
-                else:
-                    periods = self._compute_periods(options_list, extra_domain=[('account_id', '=', account.id)])
-                has_value = any(col['value'] for period in periods for col in period['columns'])
-                if has_value:
-                    children.append({
-                        'id': f'{self.id}-account-{account.id}',
-                        'real_line_id': self.id,
-                        'account_id': account.id,
-                        'name': f'{account.code} {account.name}',
-                        'code': account.code,
-                        'level': self.hierarchy_level + 1,
-                        'foldable': False,
-                        'unfolded': True,
-                        'has_children': False,
-                        'periods': periods,
-                        'children': [],
-                    })
+                for account in accounts:
+                    if batched_periods is not None:
+                        periods = batched_periods[account.id]
+                    else:
+                        periods = self._compute_periods(options_list, extra_domain=[('account_id', '=', account.id)])
+                    has_value = any(col['value'] for period in periods for col in period['columns'])
+                    if has_value:
+                        children.append({
+                            'id': f'{self.id}-account-{account.id}',
+                            'real_line_id': self.id,
+                            'account_id': account.id,
+                            'name': f'{account.code} {account.name}',
+                            'code': account.code,
+                            'level': self.hierarchy_level + 1,
+                            'foldable': False,
+                            'unfolded': True,
+                            'has_children': False,
+                            'periods': periods,
+                            'children': [],
+                        })
 
         # The summary row's own total - the line's own expression(s)
         # evaluated with no extra_domain, i.e. across every account, not

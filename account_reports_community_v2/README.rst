@@ -23,19 +23,25 @@ Financial Reports
 * Tax Report
 * Journal Report
 * Cash Flow Statement
+* Composite Financial Statements Package (Multi-Section Report)
 
 Reporting Capabilities
 ----------------------
-* Interactive reports in the Odoo interface
-* Drill-down from report lines to accounting details
-* Flexible reporting periods
-* Period comparison
+* Interactive reports in the Odoo interface with OWL 3 architecture
+* Dynamic User-Defined Grouping (Group by Account, Partner, or Journal directly from UI)
+* Common-Size Vertical Analysis (% of Total Revenue / Total Assets)
+* Multi-Period Extended Comparison (1, 2, 3, or 4 Periods & Year-over-Year YoY)
+* Horizontal Variance Analysis (Amount Δ and Var %) with color-coded badges
+* Inline visual sparklines rendering trajectory curves
+* Sticky table headers and frozen first column for frictionless scrolling
+* Drill-down from report lines to accounting details and journal items
+* Flexible reporting periods and presets
 * Report-specific filters
 * Multi-company reporting
 * Multi-currency support
-* PDF export
-* XLSX export
-* Pagination for large transaction datasets
+* Formula-driven XLSX export with multi-sheet composite support
+* Executive PDF export
+* Keyset pagination for large transaction datasets
 
 Built for Odoo Community
 ========================
@@ -49,7 +55,7 @@ It provides an independent implementation of financial reporting functionality u
 Requirements
 ============
 
-* Odoo 19.0 Community Edition
+* Odoo 20.0 Community Edition
 * Standard Odoo account module
 
 No Odoo Enterprise modules are required.
@@ -151,7 +157,7 @@ Compatibility
 
    * - Odoo Version
      - Community
-   * - Odoo 19.0
+   * - Odoo 20.0
      - Yes
 
 License

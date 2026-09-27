@@ -24,17 +24,23 @@
                   action="action_general_ledger"
                   sequence="3"/>
 
+        <menuitem id="menu_composite_financial_statements"
+                  name="Financial Statements Package"
+                  parent="account.menu_finance_reports"
+                  action="action_composite_financial_statements"
+                  sequence="0"/>
+
         <menuitem id="menu_balance_sheet"
                   name="Balance Sheet"
                   parent="account.menu_finance_reports"
                   action="action_balance_sheet"
-                  sequence="0"/>
+                  sequence="1"/>
 
         <menuitem id="menu_profit_and_loss"
                   name="Profit and Loss"
                   parent="account.menu_finance_reports"
                   action="action_profit_and_loss"
-                  sequence="1"/>
+                  sequence="2"/>
 
         <!--
             account.account_reports_partners_reports_menu ("Partner Reports")

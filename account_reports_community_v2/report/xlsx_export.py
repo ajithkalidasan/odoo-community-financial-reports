@@ -3,30 +3,24 @@ import io
 
 def build_xlsx(report, data):
     """Builds an XLSX workbook (as raw bytes) from a report's already-computed
-    data dict (the same envelope action_get_report_data returns, but always
-    called with options['export_mode']=True so every foldable row is fully
-    expanded and no aml_rows list is truncated - see the export_mode comment
-    in account_report_engine.py).
-
-    Dispatches on report_handler since each bespoke handler's row shape is
-    different (a generic expression-tree hierarchy vs. a flat list of
-    account/partner/tax/journal groups with nested journal-item rows) -
-    mirrors the dispatch in account.report._get_report_data / the frontend's
-    per-handler table templates.
+    data dict. Supports single reports as well as multi-sheet composite reports
+    (e.g., Financial Statements Package with separate tabs for Balance Sheet,
+    Profit and Loss, and Cash Flow Statement).
     """
     import xlsxwriter  # noqa: PLC0415 (lazy import, matches web/controllers/pivot.py)
 
     output = io.BytesIO()
     workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-    worksheet = workbook.add_worksheet(_safe_sheet_name(report.name))
 
     formats = {
         'title': workbook.add_format({'bold': True, 'font_size': 14}),
         'subtitle': workbook.add_format({'italic': True, 'font_color': '#666666'}),
-        'header': workbook.add_format({'bold': True, 'bg_color': '#DDDDDD', 'border': 1}),
+        'header': workbook.add_format({'bold': True, 'bg_color': '#E9ECEF', 'border': 1}),
         'bold': workbook.add_format({'bold': True}),
         'bold_amount': workbook.add_format({'bold': True, 'num_format': '#,##0.00'}),
         'amount': workbook.add_format({'num_format': '#,##0.00'}),
+        'bold_percent': workbook.add_format({'bold': True, 'num_format': '0.0%'}),
+        'percent': workbook.add_format({'num_format': '0.0%'}),
         'date': workbook.add_format({'num_format': 'yyyy-mm-dd'}),
         'level0': workbook.add_format({'bold': True}),
         'level1': workbook.add_format({'indent': 1}),
@@ -34,7 +28,22 @@ def build_xlsx(report, data):
         'level3': workbook.add_format({'indent': 3}),
     }
 
-    worksheet.write(0, 0, report.name, formats['title'])
+    # If composite with multiple sections data, export one worksheet per section
+    if data.get('is_composite') and data.get('sections_data'):
+        for s_idx, sec_data in enumerate(data['sections_data']):
+            sheet_title = _safe_sheet_name(sec_data.get('report_name') or f"Section {s_idx + 1}")
+            worksheet = workbook.add_worksheet(sheet_title)
+            _render_single_sheet(worksheet, formats, sec_data.get('report_name') or report.name, sec_data)
+    else:
+        worksheet = workbook.add_worksheet(_safe_sheet_name(report.name))
+        _render_single_sheet(worksheet, formats, report.name, data)
+
+    workbook.close()
+    return output.getvalue()
+
+
+def _render_single_sheet(worksheet, formats, title, data):
+    worksheet.write(0, 0, title, formats['title'])
     options = data.get('options') or {}
     period_desc = f"{options.get('date_from', '')} → {options.get('date_to', '')}"
     worksheet.write(1, 0, period_desc, formats['subtitle'])
@@ -50,9 +59,7 @@ def build_xlsx(report, data):
     elif handler == 'tax_report':
         row = _write_tax_report(worksheet, formats, data, row)
 
-    worksheet.freeze_panes(4, 1)
-    workbook.close()
-    return output.getvalue()
+    return row
 
 
 def _safe_sheet_name(name):
@@ -68,20 +75,41 @@ def _level_format(formats, level):
 def _write_generic(worksheet, formats, data, row):
     columns = data.get('columns') or []
     periods = data.get('periods') or []
-    col = 1
-    if len(periods) > 1:
-        for period in periods:
-            worksheet.merge_range(row, col, row, col + len(columns) - 1, period['label'], formats['header'])
-            col += len(columns)
-        row += 1
+    options = data.get('options') or {}
+    show_percentages = bool(options.get('show_percentages'))
+    has_comparison = len(periods) > 1
 
-    worksheet.write(row, 0, 'Name', formats['header'])
+    # Calculate column span per period: each column has balance, plus % if show_percentages
+    cols_per_period = len(columns) * (2 if show_percentages else 1)
+    col = 1
+    if has_comparison:
+        worksheet.merge_range(row, 0, row + 1, 0, 'Name', formats['header'])
+        for period in periods:
+            period_label = period.get('label') or ''
+            if cols_per_period > 1:
+                worksheet.merge_range(row, col, row, col + cols_per_period - 1, period_label, formats['header'])
+            else:
+                worksheet.write(row, col, period_label, formats['header'])
+            col += cols_per_period
+        worksheet.merge_range(row, col, row, col + 1, "Variance (Δ)", formats['header'])
+        row += 1
+    else:
+        worksheet.write(row, 0, 'Name', formats['header'])
+
     col = 1
     for _period in periods:
         for column in columns:
             worksheet.write(row, col, column['name'], formats['header'])
             col += 1
+            if show_percentages:
+                worksheet.write(row, col, "% of Total", formats['header'])
+                col += 1
+    if has_comparison:
+        worksheet.write(row, col, "Amount Δ", formats['header'])
+        worksheet.write(row, col + 1, "Variance %", formats['header'])
     row += 1
+
+    worksheet.freeze_panes(row, 1)
 
     def write_lines(lines, level):
         nonlocal row
@@ -96,13 +124,32 @@ def _write_generic(worksheet, formats, data, row):
                     if value is not None:
                         worksheet.write_number(row, col, value, amount_fmt)
                     col += 1
+
+                    if show_percentages:
+                        pct_val = pcol.get('percent_of_total')
+                        pct_fmt = formats['bold_percent'] if level == 0 else formats['percent']
+                        if pct_val is not None:
+                            worksheet.write_number(row, col, pct_val / 100.0, pct_fmt)
+                        col += 1
+
+            if has_comparison:
+                var_amt = line.get('variance_amount')
+                var_pct = line.get('variance_percent')
+                var_fmt = formats['bold_amount'] if level == 0 else formats['amount']
+                pct_fmt = formats['bold_percent'] if level == 0 else formats['percent']
+                if var_amt is not None:
+                    worksheet.write_number(row, col, var_amt, var_fmt)
+                if var_pct is not None:
+                    worksheet.write_number(row, col + 1, var_pct / 100.0, pct_fmt)
+
             row += 1
             if line.get('children'):
                 write_lines(line['children'], level + 1)
 
     write_lines(data.get('lines') or [], 0)
     worksheet.set_column(0, 0, 45)
-    worksheet.set_column(1, max(1, len(columns) * max(1, len(periods))), 16)
+    total_cols = max(1, len(periods) * cols_per_period + (2 if has_comparison else 0))
+    worksheet.set_column(1, total_cols, 15)
     return row
 
 
@@ -126,6 +173,7 @@ def _write_ledger_style(worksheet, formats, data, row, handler):
     for col, title in enumerate(headers):
         worksheet.write(row, col, title, formats['header'])
     row += 1
+    worksheet.freeze_panes(row, 1)
 
     for group in data.get('lines') or []:
         worksheet.write(row, 0, group.get('name') or '', formats['bold'])
@@ -166,6 +214,7 @@ def _write_aged_balance(worksheet, formats, data, row):
     for col, title in enumerate(headers):
         worksheet.write(row, col, title, formats['header'])
     row += 1
+    worksheet.freeze_panes(row, 1)
 
     for line in data.get('lines') or []:
         worksheet.write(row, 0, line.get('name') or '', formats['bold'])
@@ -193,6 +242,7 @@ def _write_tax_report(worksheet, formats, data, row):
     for col, title in enumerate(headers):
         worksheet.write(row, col, title, formats['header'])
     row += 1
+    worksheet.freeze_panes(row, 1)
 
     for line in data.get('lines') or []:
         worksheet.write(row, 0, line.get('name') or '', formats['bold'])

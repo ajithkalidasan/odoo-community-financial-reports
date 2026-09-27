@@ -1,402 +1,610 @@
-<section class="oe_container">
-    <div class="row oe_spaced" style="padding: 45px 0 30px;">
-        <div class="col-12" style="text-align: center;">
-            <h1 style="font-size: 36px; font-weight: 700; color: #2c3e50; margin-bottom: 12px;">
-                Advanced Financial Reports for Odoo Community
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced Financial Reports for Odoo Community</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc;">
+
+<!-- ================================================================= -->
+<!-- Advanced Financial Reports Suite for Odoo 20 Community            -->
+<!-- Official Odoo App Store Showcase (Modern Design + Image Frames)   -->
+<!-- Version: 20.0.2.0.0 | Author: Ajith | License: LGPL-3            -->
+<!-- ================================================================= -->
+
+<style>
+    /* Scoped styling ensuring identical pixel-perfect rendering in Odoo App Store and Local Preview */
+    .afr-wrapper {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #1e293b;
+        background-color: #f8fafc;
+        line-height: 1.6;
+        padding: 30px 15px;
+        box-sizing: border-box;
+    }
+    .afr-wrapper * {
+        box-sizing: border-box;
+    }
+    .afr-container {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+    .afr-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: -10px;
+    }
+    .afr-col-12 { flex: 0 0 100%; max-width: 100%; padding: 10px; }
+    .afr-col-6  { flex: 0 0 50%;   max-width: 50%;   padding: 10px; }
+    .afr-col-4  { flex: 0 0 33.333%; max-width: 33.333%; padding: 10px; }
+    .afr-col-3  { flex: 0 0 25%;   max-width: 25%;   padding: 10px; }
+    
+    @media (max-width: 992px) {
+        .afr-col-3 { flex: 0 0 50%; max-width: 50%; }
+        .afr-col-4 { flex: 0 0 50%; max-width: 50%; }
+    }
+    @media (max-width: 768px) {
+        .afr-col-6, .afr-col-4, .afr-col-3 { flex: 0 0 100%; max-width: 100%; }
+    }
+
+    .afr-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .afr-browser-frame {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+        margin: 15px 0;
+    }
+    .afr-browser-topbar {
+        background: #f1f5f9;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .afr-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .afr-dot-red    { background: #ef4444; }
+    .afr-dot-yellow { background: #f59e0b; }
+    .afr-dot-green  { background: #10b981; }
+    .afr-url-bar {
+        margin-left: 10px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 3px 12px;
+        font-size: 11px;
+        color: #64748b;
+        font-family: monospace;
+        flex: 1;
+        max-width: 380px;
+    }
+    .afr-img {
+        width: 100%;
+        height: auto;
+        display: block;
+        min-height: 200px;
+        background: #f8fafc;
+    }
+    .afr-badge {
+        display: inline-block;
+        padding: 5px 14px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+</style>
+
+<div class="afr-wrapper">
+
+    <!-- ==================== 1. HERO SECTION ==================== -->
+    <section class="oe_container" style="padding-bottom: 30px;">
+        <div class="afr-container" style="text-align: center;">
+            
+            <!-- BADGES -->
+            <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+                <span class="afr-badge" style="background: linear-gradient(135deg, #714B67 0%, #52354a 100%); color: #ffffff; text-transform: uppercase;">
+                    Odoo 20 Community Native
+                </span>
+                <span class="afr-badge" style="background: linear-gradient(135deg, #017E84 0%, #01595e 100%); color: #ffffff;">
+                    v20.0.2.0.0
+                </span>
+                <span class="afr-badge" style="background: #ffffff; color: #0284c7; border: 1px solid #bae6fd;">
+                    100% Free &amp; Open Source (LGPL-3)
+                </span>
+            </div>
+
+            <!-- TITLE -->
+            <h1 style="font-size: 38px; font-weight: 800; color: #0f172a; margin: 0 0 15px 0; line-height: 1.25; letter-spacing: -0.6px;">
+                Advanced Financial Reports Suite
             </h1>
-            <h3 style="font-size: 20px; font-weight: 400; color: #68727d; margin-bottom: 20px;">
-                Professional financial reporting for Odoo Community Edition
-            </h3>
-            <p style="font-size: 16px; line-height: 1.7; color: #555; max-width: 850px; margin: 0 auto;">
-                A complete financial reporting suite with 10 essential accounting reports,
-                interactive analysis, drill-down capabilities, and PDF and Excel exports.
+
+            <p style="font-size: 18px; color: #475569; max-width: 820px; margin: 0 auto 25px; line-height: 1.55;">
+                Enterprise-grade accounting intelligence for Odoo Community. Multi-period comparisons, vertical common-size analysis, dynamic groupings, and board-ready PDF/XLSX exports.
             </p>
-        </div>
-    </div>
-</section>
 
-<!-- MAIN PRODUCT SCREENSHOT -->
-<section class="oe_container">
-    <div class="row oe_spaced" style="padding: 20px 0 45px;">
-        <div class="col-12" style="text-align: center;">
-            <!-- PLACEHOLDER: screenshots/general_ledger.png -->
-            <img src="screenshots/general_ledger.png"
-                 alt="General Ledger Report"
-                 style="width: 100%; max-width: 1100px; height: auto; border-radius: 8px;" />
-        </div>
-    </div>
-</section>
+            <!-- MAIN HERO BANNER PLACEHOLDER -->
+            <div class="afr-browser-frame" style="max-width: 1050px; margin: 0 auto 30px;">
+                <div class="afr-browser-topbar">
+                    <span class="afr-dot afr-dot-red"></span>
+                    <span class="afr-dot afr-dot-yellow"></span>
+                    <span class="afr-dot afr-dot-green"></span>
+                    <span class="afr-url-bar">odoo.local/accounting/financial-reports-package</span>
+                </div>
+                <!-- PLACEHOLDER: banner.png -->
+                <img src="banner.png" alt="Advanced Financial Reports Suite Banner" class="afr-img" />
+            </div>
 
-<section class="oe_container">
-    <div class="row oe_spaced" style="padding: 20px 0 40px;">
-        <div class="col-md-4" style="text-align: center; padding: 20px;">
-            <h2 style="font-size: 28px; color: #2c3e50;">10</h2>
-            <p style="font-size: 15px; color: #68727d;">Essential Financial Reports</p>
         </div>
-        <div class="col-md-4" style="text-align: center; padding: 20px;">
-            <h2 style="font-size: 28px; color: #2c3e50;">PDF &amp; XLSX</h2>
-            <p style="font-size: 15px; color: #68727d;">Professional Export Options</p>
-        </div>
-        <div class="col-md-4" style="text-align: center; padding: 20px;">
-            <h2 style="font-size: 28px; color: #2c3e50;">Community</h2>
-            <p style="font-size: 15px; color: #68727d;">Built for Odoo Community Edition</p>
-        </div>
-    </div>
-</section>
+    </section>
 
-<section class="oe_container">
-    <div class="row oe_spaced" style="padding: 35px 0;">
-        <div class="col-12">
-            <h2 style="font-size: 28px; font-weight: 600; color: #2c3e50; text-align: center; margin-bottom: 20px;">
-                Complete Financial Reporting in One Place
-            </h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #555; max-width: 900px; margin: 0 auto; text-align: center;">
-                Analyze your accounting data through a unified reporting interface designed
-                for accountants, finance teams, business owners, and Odoo Community users.
-                Move from financial summaries to detailed transactions without leaving the report.
-            </p>
+    <!-- ==================== 2. STATS BAR ==================== -->
+    <section class="oe_container" style="padding-bottom: 30px;">
+        <div class="afr-container">
+            <div class="afr-row">
+                <div class="afr-col-3">
+                    <div class="afr-card" style="text-align: center;">
+                        <div style="font-size: 30px; font-weight: 800; color: #714B67;">10 + 1</div>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Reports Ready</div>
+                        <div style="font-size: 12px; color: #64748b;">Includes Composite Package</div>
+                    </div>
+                </div>
+                <div class="afr-col-3">
+                    <div class="afr-card" style="text-align: center;">
+                        <div style="font-size: 30px; font-weight: 800; color: #017E84;">1 to 4</div>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Periods + YoY</div>
+                        <div style="font-size: 12px; color: #64748b;">Sequential &amp; Annual Shifting</div>
+                    </div>
+                </div>
+                <div class="afr-col-3">
+                    <div class="afr-card" style="text-align: center;">
+                        <div style="font-size: 30px; font-weight: 800; color: #0284c7;">% Total</div>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Common-Size</div>
+                        <div style="font-size: 12px; color: #64748b;">Asset &amp; Revenue Benchmark</div>
+                    </div>
+                </div>
+                <div class="afr-col-3">
+                    <div class="afr-card" style="text-align: center;">
+                        <div style="font-size: 30px; font-weight: 800; color: #16a34a;">Multi-Tab</div>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Excel &amp; PDF</div>
+                        <div style="font-size: 12px; color: #64748b;">Formula-driven sheets &amp; QWeb</div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- GENERAL LEDGER -->
-<section class="oe_container">
-    <div class="row oe_spaced align-items-center" style="padding: 35px 0;">
-        <div class="col-md-5" style="padding: 20px;">
-            <h2 style="font-size: 27px; color: #2c3e50;">General Ledger</h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d;">
-                See exactly where your numbers come from. Review account movements
-                and drill down into the journal entries behind your reported balances.
-            </p>
-        </div>
-        <div class="col-md-7" style="padding: 15px; text-align: center;">
-            <!-- PLACEHOLDER: screenshots/general_ledger.png -->
-            <img src="screenshots/general_ledger.png"
-                 alt="General Ledger"
-                 style="width: 100%; height: auto; border-radius: 6px;" />
-        </div>
-    </div>
-</section>
+    <!-- ==================== 3. WHAT'S NEW IN V20.0.2.0 ==================== -->
+    <section class="oe_container" style="padding-bottom: 35px;">
+        <div class="afr-container">
+            <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 14px; padding: 35px 25px; color: #ffffff;">
+                
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <span class="afr-badge" style="background: #38bdf8; color: #0f172a; text-transform: uppercase;">
+                        New in Version 20.0.2.0
+                    </span>
+                    <h2 style="font-size: 26px; font-weight: 800; color: #ffffff; margin: 10px 0 6px 0;">
+                        Enterprise-Grade Accounting for Odoo 20 Community
+                    </h2>
+                    <p style="font-size: 14px; color: #94a3b8; margin: 0 auto; max-width: 700px;">
+                        Built from the ground up for modern OWL 3 architecture with fast query batching and zero enterprise dependencies.
+                    </p>
+                </div>
 
-<!-- TRIAL BALANCE -->
-<section class="oe_container">
-    <div class="row oe_spaced align-items-center" style="padding: 35px 0;">
-        <div class="col-md-7" style="padding: 15px; text-align: center;">
-            <!-- PLACEHOLDER: screenshots/trial_balance.png -->
-            <img src="screenshots/trial_balance.png"
-                 alt="Trial Balance"
-                 style="width: 100%; height: auto; border-radius: 6px;" />
-        </div>
-        <div class="col-md-5" style="padding: 20px;">
-            <h2 style="font-size: 27px; color: #2c3e50;">Trial Balance</h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d;">
-                Review debit and credit balances across your accounts and verify
-                the overall balance of your accounting records.
-            </p>
-        </div>
-    </div>
-</section>
+                <div class="afr-row">
+                    <div class="afr-col-4">
+                        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 18px;">
+                            <div style="font-size: 20px; margin-bottom: 6px;">📑</div>
+                            <h4 style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 0 0 6px 0;">Composite Financial Package</h4>
+                            <p style="font-size: 13px; color: #cbd5e1; margin: 0; line-height: 1.5;">
+                                Switch between Balance Sheet, P&amp;L, and Cash Flow in one tabbed view. Single-click export compiles all statements into a multi-sheet Excel file.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="afr-col-4">
+                        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 18px;">
+                            <div style="font-size: 20px; margin-bottom: 6px;">📊</div>
+                            <h4 style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 0 0 6px 0;">Vertical Common-Size Analysis</h4>
+                            <p style="font-size: 13px; color: #cbd5e1; margin: 0; line-height: 1.5;">
+                                <strong>% of Total</strong> benchmarks every balance against Total Assets or Operating Revenue automatically across all sub-accounts.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="afr-col-4">
+                        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 18px;">
+                            <div style="font-size: 20px; margin-bottom: 6px;">🔄</div>
+                            <h4 style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 0 0 6px 0;">1-4 Periods &amp; YoY Comparison</h4>
+                            <p style="font-size: 13px; color: #cbd5e1; margin: 0; line-height: 1.5;">
+                                Compare up to 4 consecutive quarters or years, or Same Period Last Year (YoY) with Amount (&Delta;) and Percentage (&Delta;%) variance pills.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="afr-col-4">
+                        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 18px;">
+                            <div style="font-size: 20px; margin-bottom: 6px;">👥</div>
+                            <h4 style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 0 0 6px 0;">Dynamic Group By</h4>
+                            <p style="font-size: 13px; color: #cbd5e1; margin: 0; line-height: 1.5;">
+                                Dynamically slice and aggregate accounts by <strong>Partner</strong> or <strong>Journal</strong> in real-time with high-speed batched queries.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="afr-col-4">
+                        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 18px;">
+                            <div style="font-size: 20px; margin-bottom: 6px;">🎯</div>
+                            <h4 style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 0 0 6px 0;">Clutter-Free Date Popover</h4>
+                            <p style="font-size: 13px; color: #cbd5e1; margin: 0; line-height: 1.5;">
+                                Clean date selector popover with quick presets (This Month, Quarter, Year, Last Year) and sticky headers for comfortable scrolling.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="afr-col-4">
+                        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 18px;">
+                            <div style="font-size: 20px; margin-bottom: 6px;">⚡</div>
+                            <h4 style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 0 0 6px 0;">Linear QWeb &amp; XLSX Engine</h4>
+                            <p style="font-size: 13px; color: #cbd5e1; margin: 0; line-height: 1.5;">
+                                Pre-flattened hierarchy indentation prevents PDF recursion errors, delivering crisp Wkhtmltopdf exports and formula-driven Excel files.
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
-<!-- PROFIT & LOSS -->
-<section class="oe_container">
-    <div class="row oe_spaced align-items-center" style="padding: 35px 0;">
-        <div class="col-md-5" style="padding: 20px;">
-            <h2 style="font-size: 27px; color: #2c3e50;">Profit &amp; Loss</h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d;">
-                Understand revenue, expenses, and profitability for your selected
-                reporting period.
-            </p>
+            </div>
         </div>
-        <div class="col-md-7" style="padding: 15px; text-align: center;">
-            <!-- PLACEHOLDER: screenshots/profit_loss.png -->
-            <img src="screenshots/profit_loss.png"
-                 alt="Profit and Loss Report"
-                 style="width: 100%; height: auto; border-radius: 6px;" />
-        </div>
-    </div>
-</section>
+    </section>
 
-<!-- BALANCE SHEET -->
-<section class="oe_container">
-    <div class="row oe_spaced align-items-center" style="padding: 35px 0;">
-        <div class="col-md-7" style="padding: 15px; text-align: center;">
-            <!-- PLACEHOLDER: screenshots/balance_sheet.png -->
-            <img src="screenshots/balance_sheet.png"
-                 alt="Balance Sheet"
-                 style="width: 100%; height: auto; border-radius: 6px;" />
-        </div>
-        <div class="col-md-5" style="padding: 20px;">
-            <h2 style="font-size: 27px; color: #2c3e50;">Balance Sheet</h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d;">
-                Get a structured view of assets, liabilities, and equity to understand
-                your company's financial position.
-            </p>
-        </div>
-    </div>
-</section>
+    <!-- ==================== 4. CORE REPORT SHOWCASES (WITH PLACEHOLDERS) ==================== -->
 
-<!-- PARTNER Ledger -->
-<section class="oe_container">
-    <div class="row oe_spaced align-items-center" style="padding: 35px 0;">
-        <div class="col-md-5" style="padding: 20px;">
-            <h2 style="font-size: 27px; color: #2c3e50;">Partner Ledger</h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d;">
-                Review customer and vendor transactions and investigate the accounting
-                activity behind partner balances.
-            </p>
+    <!-- SHOWCASE 1: GENERAL LEDGER -->
+    <section class="oe_container" style="padding-bottom: 30px;">
+        <div class="afr-container">
+            <div class="afr-card">
+                <div class="afr-row" style="align-items: center;">
+                    <div class="afr-col-6">
+                        <span class="afr-badge" style="background: #faf5ff; color: #714B67;">Core Financial Audit</span>
+                        <h3 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 8px 0 10px 0;">General Ledger</h3>
+                        <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 14px;">
+                            Audit your entire general ledger with ease. Trace account movements, monitor cumulative running balances, and inspect the specific journal entries behind any balance.
+                        </p>
+                        <div style="font-size: 13px; color: #334155; line-height: 1.8;">
+                            <div><strong>✓ Smart Pagination:</strong> Blazing fast loading on tens of thousands of journal items</div>
+                            <div><strong>✓ 1-Click Drill-Down:</strong> Kebab menu action to inspect specific Journal Items or Partner Ledger</div>
+                            <div><strong>✓ Initial &amp; Closing Balances:</strong> Real-time reconciliation calculation</div>
+                        </div>
+                    </div>
+                    <div class="afr-col-6">
+                        <div class="afr-browser-frame">
+                            <div class="afr-browser-topbar">
+                                <span class="afr-dot afr-dot-red"></span>
+                                <span class="afr-dot afr-dot-yellow"></span>
+                                <span class="afr-dot afr-dot-green"></span>
+                                <span class="afr-url-bar">odoo.local / general-ledger</span>
+                            </div>
+                            <!-- PLACEHOLDER: screenshots/general_ledger.png -->
+                            <img src="screenshots/general_ledger.png" alt="General Ledger Screenshot" class="afr-img" />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-md-7" style="padding: 15px; text-align: center;">
-            <!-- PLACEHOLDER: screenshots/partner_ledger.png -->
-            <img src="screenshots/partner_ledger.png"
-                 alt="Partner Ledger"
-                 style="width: 100%; height: auto; border-radius: 6px;" />
-        </div>
-    </div>
-</section>
+    </section>
 
-<!-- AGED RECEIVABLE -->
-<section class="oe_container">
-    <div class="row oe_spaced align-items-center" style="padding: 35px 0;">
-        <div class="col-md-7" style="padding: 15px; text-align: center;">
-            <!-- PLACEHOLDER: screenshots/aged_receivable.png -->
-            <img src="screenshots/aged_receivable.png"
-                 alt="Aged Receivable"
-                 style="width: 100%; height: auto; border-radius: 6px;" />
+    <!-- SHOWCASE 2: BALANCE SHEET -->
+    <section class="oe_container" style="padding-bottom: 30px;">
+        <div class="afr-container">
+            <div class="afr-card">
+                <div class="afr-row" style="align-items: center;">
+                    <div class="afr-col-6">
+                        <div class="afr-browser-frame">
+                            <div class="afr-browser-topbar">
+                                <span class="afr-dot afr-dot-red"></span>
+                                <span class="afr-dot afr-dot-yellow"></span>
+                                <span class="afr-dot afr-dot-green"></span>
+                                <span class="afr-url-bar">odoo.local / balance-sheet</span>
+                            </div>
+                            <!-- PLACEHOLDER: screenshots/balance_sheet.png -->
+                            <img src="screenshots/balance_sheet.png" alt="Balance Sheet Screenshot" class="afr-img" />
+                        </div>
+                    </div>
+                    <div class="afr-col-6">
+                        <span class="afr-badge" style="background: #f0fdf4; color: #16a34a;">Financial Position</span>
+                        <h3 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 8px 0 10px 0;">Balance Sheet</h3>
+                        <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 14px;">
+                            Clear, structured hierarchy of Assets, Liabilities, and Equity. Drill down from master categories into sub-categories down to atomic accounts.
+                        </p>
+                        <div style="font-size: 13px; color: #334155; line-height: 1.8;">
+                            <div><strong>✓ Common-Size Benchmarking:</strong> Assets as a percentage of Total Assets</div>
+                            <div><strong>✓ Multi-Year Comparisons:</strong> Evaluate growth across consecutive fiscal years</div>
+                            <div><strong>✓ Retained Earnings:</strong> Seamlessly incorporates current-year earnings</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-md-5" style="padding: 20px;">
-            <h2 style="font-size: 27px; color: #2c3e50;">Aged Receivable</h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d;">
-                Identify outstanding customer balances and understand receivables
-                according to their aging periods.
-            </p>
-        </div>
-    </div>
-</section>
+    </section>
 
-<!-- AGED PAYABLE -->
-<section class="oe_container">
-    <div class="row oe_spaced align-items-center" style="padding: 35px 0;">
-        <div class="col-md-5" style="padding: 20px;">
-            <h2 style="font-size: 27px; color: #2c3e50;">Aged Payable</h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d;">
-                Monitor outstanding supplier balances and analyze payable amounts
-                based on their aging periods.
-            </p>
+    <!-- SHOWCASE 3: PROFIT & LOSS -->
+    <section class="oe_container" style="padding-bottom: 30px;">
+        <div class="afr-container">
+            <div class="afr-card">
+                <div class="afr-row" style="align-items: center;">
+                    <div class="afr-col-6">
+                        <span class="afr-badge" style="background: #eff6ff; color: #0284c7;">Performance &amp; Profitability</span>
+                        <h3 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 8px 0 10px 0;">Profit and Loss</h3>
+                        <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 14px;">
+                            Deep insights into operating income, cost of goods sold, operating expenses, and net profit. Identify cost trends and evaluate operational margins.
+                        </p>
+                        <div style="font-size: 13px; color: #334155; line-height: 1.8;">
+                            <div><strong>✓ Margin Analysis:</strong> Automatic % of Operating Revenue calculation</div>
+                            <div><strong>✓ Year-over-Year (YoY):</strong> Instantly compare against last year's calendar window</div>
+                            <div><strong>✓ Interactive Drill-Down:</strong> View invoices and journal lines behind revenues</div>
+                        </div>
+                    </div>
+                    <div class="afr-col-6">
+                        <div class="afr-browser-frame">
+                            <div class="afr-browser-topbar">
+                                <span class="afr-dot afr-dot-red"></span>
+                                <span class="afr-dot afr-dot-yellow"></span>
+                                <span class="afr-dot afr-dot-green"></span>
+                                <span class="afr-url-bar">odoo.local / profit-and-loss</span>
+                            </div>
+                            <!-- PLACEHOLDER: screenshots/profit_loss.png -->
+                            <img src="screenshots/profit_loss.png" alt="Profit and Loss Screenshot" class="afr-img" />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-md-7" style="padding: 15px; text-align: center;">
-            <!-- PLACEHOLDER: screenshots/aged_payable.png -->
-            <img src="screenshots/aged_payable.png"
-                 alt="Aged Payable"
-                 style="width: 100%; height: auto; border-radius: 6px;" />
-        </div>
-    </div>
-</section>
+    </section>
 
-<!-- TAX REPORT -->
-<section class="oe_container">
-    <div class="row oe_spaced align-items-center" style="padding: 35px 0;">
-        <div class="col-md-7" style="padding: 15px; text-align: center;">
-            <!-- PLACEHOLDER: screenshots/tax_report.png -->
-            <img src="screenshots/tax_report.png"
-                 alt="Tax Report"
-                 style="width: 100%; height: auto; border-radius: 6px;" />
+    <!-- SHOWCASE 4: MULTI-PERIOD COMPARISON -->
+    <section class="oe_container" style="padding-bottom: 30px;">
+        <div class="afr-container">
+            <div class="afr-card">
+                <div class="afr-row" style="align-items: center;">
+                    <div class="afr-col-6">
+                        <div class="afr-browser-frame">
+                            <div class="afr-browser-topbar">
+                                <span class="afr-dot afr-dot-red"></span>
+                                <span class="afr-dot afr-dot-yellow"></span>
+                                <span class="afr-dot afr-dot-green"></span>
+                                <span class="afr-url-bar">odoo.local / period-comparison</span>
+                            </div>
+                            <!-- PLACEHOLDER: screenshots/comparison.png -->
+                            <img src="screenshots/comparison.png" alt="Period Comparison Screenshot" class="afr-img" />
+                        </div>
+                    </div>
+                    <div class="afr-col-6">
+                        <span class="afr-badge" style="background: #f0fdf4; color: #16a34a;">Trend Analytics</span>
+                        <h3 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 8px 0 10px 0;">Multi-Period Comparison</h3>
+                        <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 14px;">
+                            Side-by-side columns for 1 to 4 sequential or annual periods. Highlight growth and contraction with dynamic variance pills and SVG sparklines.
+                        </p>
+                        <div style="font-size: 13px; color: #334155; line-height: 1.8;">
+                            <div><strong>✓ Amount Delta (&Delta;):</strong> Absolute monetary change between periods</div>
+                            <div><strong>✓ Variance % (&Delta;%):</strong> Percentage variance with color-coded badges</div>
+                            <div><strong>✓ SVG Sparklines:</strong> Visual trajectory curve rendered directly in each row</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-md-5" style="padding: 20px;">
-            <h2 style="font-size: 27px; color: #2c3e50;">Tax Report</h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d;">
-                Review tax-related accounting information in a structured
-                financial reporting view.
-            </p>
-        </div>
-    </div>
-</section>
+    </section>
 
-<!-- JOURNAL REPORT -->
-<section class="oe_container">
-    <div class="row oe_spaced align-items-center" style="padding: 35px 0;">
-        <div class="col-md-5" style="padding: 20px;">
-            <h2 style="font-size: 27px; color: #2c3e50;">Journal Report</h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d;">
-                Analyze accounting activity by journal and investigate transactions
-                across your organization.
-            </p>
-        </div>
-        <div class="col-md-7" style="padding: 15px; text-align: center;">
-            <!-- PLACEHOLDER: screenshots/journal_report.png -->
-            <img src="screenshots/journal_report.png"
-                 alt="Journal Report"
-                 style="width: 100%; height: auto; border-radius: 6px;" />
-        </div>
-    </div>
-</section>
-
-<!-- CASH FLOW -->
-<section class="oe_container">
-    <div class="row oe_spaced align-items-center" style="padding: 35px 0;">
-        <div class="col-md-7" style="padding: 15px; text-align: center;">
-            <!-- PLACEHOLDER: screenshots/cash_flow.png -->
-            <img src="screenshots/cash_flow.png"
-                 alt="Cash Flow Statement"
-                 style="width: 100%; height: auto; border-radius: 6px;" />
-        </div>
-        <div class="col-md-5" style="padding: 20px;">
-            <h2 style="font-size: 27px; color: #2c3e50;">Cash Flow Statement</h2>
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d;">
-                Analyze cash movement and understand how cash flows through
-                your business.
-            </p>
-        </div>
-    </div>
-</section>
-
-<!-- INTERACTIVE FEATURES -->
-<section class="oe_container">
-    <div class="row oe_spaced" style="padding: 45px 0;">
-        <div class="col-12">
-            <h2 style="font-size: 28px; font-weight: 600; color: #2c3e50; text-align: center; margin-bottom: 35px;">
-                Designed for Interactive Analysis
-            </h2>
-        </div>
-
-        <div class="col-md-4" style="padding: 15px;">
-            <h3 style="font-size: 20px; color: #2c3e50;">Drill Down to Transactions</h3>
-            <p style="color: #68727d; line-height: 1.7;">
-                Move from summarized financial information to the underlying
-                accounting entries and investigate the details behind your numbers.
-            </p>
-        </div>
-
-        <div class="col-md-4" style="padding: 15px;">
-            <h3 style="font-size: 20px; color: #2c3e50;">Flexible Filters</h3>
-            <p style="color: #68727d; line-height: 1.7;">
-                Focus your analysis using reporting dates and available
-                report-specific filters.
-            </p>
-        </div>
-
-        <div class="col-md-4" style="padding: 15px;">
-            <h3 style="font-size: 20px; color: #2c3e50;">Period Comparison</h3>
-            <p style="color: #68727d; line-height: 1.7;">
-                Compare reporting periods and identify changes in financial
-                performance over time.
-            </p>
-        </div>
-    </div>
-</section>
-
-<!-- COMPARISON -->
-<section class="oe_container">
-    <div class="row oe_spaced" style="padding: 20px 0 45px;">
-        <div class="col-12" style="text-align: center;">
-            <h2 style="font-size: 26px; color: #2c3e50; margin-bottom: 25px;">
-                Compare and Analyze
-            </h2>
-
-            <!-- PLACEHOLDER: screenshots/comparison.png -->
-            <img src="screenshots/comparison.png"
-                 alt="Financial Report Comparison"
-                 style="width: 100%; max-width: 1100px; height: auto; border-radius: 8px;" />
-        </div>
-    </div>
-</section>
-
-<!-- EXPORT -->
-<section class="oe_container">
-    <div class="row oe_spaced" style="padding: 45px 0;">
-        <div class="col-12">
-            <h2 style="font-size: 28px; font-weight: 600; color: #2c3e50; text-align: center; margin-bottom: 25px;">
-                Export Your Financial Reports
-            </h2>
-
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d; max-width: 850px; margin: 0 auto 30px; text-align: center;">
-                Take your reports beyond Odoo with professional PDF and Excel exports
-                for sharing, reconciliation, analysis, and documentation.
-            </p>
-        </div>
-    </div>
-</section>
-
-<!-- COMMUNITY -->
-<section class="oe_container">
-    <div class="row oe_spaced" style="padding: 45px 0;">
-        <div class="col-12">
-            <div style="background: #f7f8fa; border: 1px solid #e1e5e8; border-radius: 8px; padding: 35px;">
-                <h2 style="font-size: 27px; font-weight: 600; color: #2c3e50; text-align: center; margin-bottom: 20px;">
-                    Built for Odoo Community
+    <!-- ==================== 5. COMPLETE 10-REPORT DIRECTORY GRID ==================== -->
+    <section class="oe_container" style="padding-bottom: 35px;">
+        <div class="afr-container">
+            
+            <div style="text-align: center; margin-bottom: 25px;">
+                <h2 style="font-size: 28px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">
+                    Complete 10-Report Directory
                 </h2>
-
-                <p style="font-size: 16px; line-height: 1.8; color: #555; text-align: center; max-width: 850px; margin: 0 auto;">
-                    This module is designed specifically for Odoo Community Edition
-                    and provides an independent financial reporting implementation
-                    on top of Odoo Community's accounting framework.
+                <p style="font-size: 14px; color: #64748b; margin: 0;">
+                    Every essential accounting report configured and ready out-of-the-box.
                 </p>
+            </div>
 
-                <p style="font-size: 15px; line-height: 1.8; color: #68727d; text-align: center; max-width: 850px; margin: 18px auto 0;">
-                    The module does not depend on, include, or reuse proprietary code
-                    from Odoo Enterprise's <code>account_reports</code> module.
+            <div class="afr-row">
+                <!-- REPORT 1: TRIAL BALANCE -->
+                <div class="afr-col-4">
+                    <div class="afr-card" style="padding: 16px;">
+                        <div class="afr-browser-frame" style="margin: 0 0 12px 0;">
+                            <div class="afr-browser-topbar" style="padding: 6px 10px;">
+                                <span class="afr-dot afr-dot-red" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-yellow" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-green" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-url-bar" style="font-size: 10px; padding: 2px 8px;">trial-balance</span>
+                            </div>
+                            <!-- PLACEHOLDER: screenshots/trial_balance.png -->
+                            <img src="screenshots/trial_balance.png" alt="Trial Balance Screenshot" class="afr-img" style="min-height: 140px;" />
+                        </div>
+                        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Trial Balance</h4>
+                        <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">Initial, period debit/credit movements, and ending balance across every active account.</p>
+                    </div>
+                </div>
+
+                <!-- REPORT 2: PARTNER LEDGER -->
+                <div class="afr-col-4">
+                    <div class="afr-card" style="padding: 16px;">
+                        <div class="afr-browser-frame" style="margin: 0 0 12px 0;">
+                            <div class="afr-browser-topbar" style="padding: 6px 10px;">
+                                <span class="afr-dot afr-dot-red" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-yellow" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-green" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-url-bar" style="font-size: 10px; padding: 2px 8px;">partner-ledger</span>
+                            </div>
+                            <!-- PLACEHOLDER: screenshots/partner_ledger.png -->
+                            <img src="screenshots/partner_ledger.png" alt="Partner Ledger Screenshot" class="afr-img" style="min-height: 140px;" />
+                        </div>
+                        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Partner Ledger</h4>
+                        <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">Customer and vendor sub-ledgers with matched payments and running balances.</p>
+                    </div>
+                </div>
+
+                <!-- REPORT 3: CASH FLOW -->
+                <div class="afr-col-4">
+                    <div class="afr-card" style="padding: 16px;">
+                        <div class="afr-browser-frame" style="margin: 0 0 12px 0;">
+                            <div class="afr-browser-topbar" style="padding: 6px 10px;">
+                                <span class="afr-dot afr-dot-red" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-yellow" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-green" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-url-bar" style="font-size: 10px; padding: 2px 8px;">cash-flow</span>
+                            </div>
+                            <!-- PLACEHOLDER: screenshots/cash_flow.png -->
+                            <img src="screenshots/cash_flow.png" alt="Cash Flow Statement Screenshot" class="afr-img" style="min-height: 140px;" />
+                        </div>
+                        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Cash Flow Statement</h4>
+                        <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">Direct accounting separated into Operating, Investing, and Financing cash activities.</p>
+                    </div>
+                </div>
+
+                <!-- REPORT 4: AGED RECEIVABLE -->
+                <div class="afr-col-4">
+                    <div class="afr-card" style="padding: 16px;">
+                        <div class="afr-browser-frame" style="margin: 0 0 12px 0;">
+                            <div class="afr-browser-topbar" style="padding: 6px 10px;">
+                                <span class="afr-dot afr-dot-red" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-yellow" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-green" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-url-bar" style="font-size: 10px; padding: 2px 8px;">aged-receivable</span>
+                            </div>
+                            <!-- PLACEHOLDER: screenshots/aged_receivable.png -->
+                            <img src="screenshots/aged_receivable.png" alt="Aged Receivable Screenshot" class="afr-img" style="min-height: 140px;" />
+                        </div>
+                        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Aged Receivable</h4>
+                        <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">Outstanding customer receivables segmented into aging intervals (1-30, 31-60, 61-90, 90+ days).</p>
+                    </div>
+                </div>
+
+                <!-- REPORT 5: AGED PAYABLE -->
+                <div class="afr-col-4">
+                    <div class="afr-card" style="padding: 16px;">
+                        <div class="afr-browser-frame" style="margin: 0 0 12px 0;">
+                            <div class="afr-browser-topbar" style="padding: 6px 10px;">
+                                <span class="afr-dot afr-dot-red" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-yellow" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-green" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-url-bar" style="font-size: 10px; padding: 2px 8px;">aged-payable</span>
+                            </div>
+                            <!-- PLACEHOLDER: screenshots/aged_payable.png -->
+                            <img src="screenshots/aged_payable.png" alt="Aged Payable Screenshot" class="afr-img" style="min-height: 140px;" />
+                        </div>
+                        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Aged Payable</h4>
+                        <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">Supplier liabilities categorized by due date intervals to optimize cash outlays.</p>
+                    </div>
+                </div>
+
+                <!-- REPORT 6: TAX REPORT -->
+                <div class="afr-col-4">
+                    <div class="afr-card" style="padding: 16px;">
+                        <div class="afr-browser-frame" style="margin: 0 0 12px 0;">
+                            <div class="afr-browser-topbar" style="padding: 6px 10px;">
+                                <span class="afr-dot afr-dot-red" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-yellow" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-dot afr-dot-green" style="width: 8px; height: 8px;"></span>
+                                <span class="afr-url-bar" style="font-size: 10px; padding: 2px 8px;">tax-report</span>
+                            </div>
+                            <!-- PLACEHOLDER: screenshots/tax_report.png -->
+                            <img src="screenshots/tax_report.png" alt="Tax Report Screenshot" class="afr-img" style="min-height: 140px;" />
+                        </div>
+                        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Tax Report</h4>
+                        <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">Aggregated sales tax and purchase tax balances, taxable bases, and net tax.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ==================== 6. DELIVERABLES & EXPORTS ==================== -->
+    <section class="oe_container" style="padding-bottom: 35px;">
+        <div class="afr-container">
+            <div class="afr-card" style="padding: 30px;">
+                <div class="afr-row" style="align-items: center;">
+                    <div class="afr-col-6">
+                        <span class="afr-badge" style="background: #faf5ff; color: #714B67;">Deliverables</span>
+                        <h3 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 8px 0 10px 0;">
+                            Board-Ready PDF &amp; Multi-Sheet Excel
+                        </h3>
+                        <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 14px;">
+                            Export pixel-perfect financial packages for executive meetings, board reviews, and external auditing without manual re-formatting.
+                        </p>
+                        <div style="font-size: 13px; color: #334155; line-height: 1.8;">
+                            <div><strong>✓ Multi-Sheet Excel:</strong> Generates Sheet 1: Balance Sheet, Sheet 2: P&amp;L, Sheet 3: Cash Flow</div>
+                            <div><strong>✓ Native Formulas:</strong> Standard accounting format, frozen header panes, and true numeric percentages</div>
+                            <div><strong>✓ High-Fidelity PDF:</strong> Page breaks between statements, full hierarchical indentation, zero truncation</div>
+                        </div>
+                    </div>
+                    <div class="afr-col-6">
+                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 20px;">
+                            <div style="font-weight: 700; color: #0f172a; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 10px;">
+                                Export Capabilities Matrix
+                            </div>
+                            <div style="font-size: 12px; color: #475569; line-height: 2;">
+                                <div><strong>• Hierarchy Indentation:</strong> Supported (PDF &amp; XLSX)</div>
+                                <div><strong>• Multi-Period Comparison:</strong> Supported (1 to 4 periods)</div>
+                                <div><strong>• Common-Size % of Total:</strong> Native Percentage Formula</div>
+                                <div><strong>• Horizontal Variance (&Delta; / %):</strong> Supported with Badges</div>
+                                <div><strong>• Multi-Company &amp; Multi-Currency:</strong> Converted at Export</div>
+                                <div><strong>• Compatibility:</strong> Odoo 20 Community Edition</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 7. COMMUNITY COMMITMENT & TECHNICAL INFO ==================== -->
+    <section class="oe_container" style="padding-bottom: 30px;">
+        <div class="afr-container">
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; text-align: center;">
+                <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">
+                    100% Free &amp; Open Source Community Architecture
+                </h3>
+                <p style="font-size: 13px; line-height: 1.7; color: #475569; max-width: 820px; margin: 0 auto 10px;">
+                    This module is an independent implementation built natively on Odoo Community Edition's <code>account</code> framework. It uses standard <code>account.report</code>, <code>account.report.line</code>, and <code>account.report.expression</code> models with zero external or proprietary dependencies.
+                </p>
+                <p style="font-size: 11px; color: #64748b; margin: 0;">
+                    <em>Notice: This module does not depend on, include, or reuse proprietary source code from Odoo Enterprise's <code>account_reports</code> module. Licensed under LGPL-3.</em>
                 </p>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- WHO IS IT FOR -->
-<section class="oe_container">
-    <div class="row oe_spaced" style="padding: 40px 0;">
-        <div class="col-12">
-            <h2 style="font-size: 28px; font-weight: 600; color: #2c3e50; text-align: center; margin-bottom: 30px;">
-                Who Is This For?
-            </h2>
-        </div>
-
-        <div class="col-md-3" style="text-align: center; padding: 15px;">
-            <h3 style="font-size: 18px; color: #2c3e50;">Accountants</h3>
-            <p style="color: #68727d; line-height: 1.6;">
-                Analyze accounting data and investigate transactions efficiently.
+    <!-- ==================== 8. FOOTER & AUTHOR SUPPORT ==================== -->
+    <section class="oe_container" style="padding-bottom: 40px;">
+        <div class="afr-container" style="text-align: center;">
+            <h3 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">
+                Developed &amp; Maintained by Ajith
+            </h3>
+            <p style="font-size: 14px; color: #64748b; max-width: 600px; margin: 0 auto 20px;">
+                Have questions, need customization, or want help setting up advanced financial reports in your Odoo environment?
             </p>
+            <div>
+                <a href="https://ajithkalidasan.github.io/ajith/" target="_blank"
+                   style="background: linear-gradient(135deg, #714B67 0%, #52354a 100%); color: #ffffff; padding: 10px 24px; border-radius: 8px; font-weight: 700; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(113,75,103,0.25);">
+                    <span>🌐 Visit Developer Portfolio</span>
+                </a>
+            </div>
         </div>
+    </section>
 
-        <div class="col-md-3" style="text-align: center; padding: 15px;">
-            <h3 style="font-size: 18px; color: #2c3e50;">Finance Teams</h3>
-            <p style="color: #68727d; line-height: 1.6;">
-                Access essential reports and export financial information when needed.
-            </p>
-        </div>
+</div>
 
-        <div class="col-md-3" style="text-align: center; padding: 15px;">
-            <h3 style="font-size: 18px; color: #2c3e50;">Business Owners</h3>
-            <p style="color: #68727d; line-height: 1.6;">
-                Get a clearer view of profitability, balances, receivables,
-                payables, and cash flow.
-            </p>
-        </div>
-
-        <div class="col-md-3" style="text-align: center; padding: 15px;">
-            <h3 style="font-size: 18px; color: #2c3e50;">Odoo Implementers</h3>
-            <p style="color: #68727d; line-height: 1.6;">
-                Add a comprehensive financial reporting solution to
-                Community projects.
-            </p>
-        </div>
-    </div>
-</section>
-
-<!-- FINAL CTA -->
-<section class="oe_container">
-    <div class="row oe_spaced" style="padding: 50px 0;">
-        <div class="col-12" style="text-align: center;">
-            <h2 style="font-size: 30px; font-weight: 600; color: #2c3e50; margin-bottom: 15px;">
-                Professional Financial Reporting for Odoo Community
-            </h2>
-
-            <p style="font-size: 16px; line-height: 1.8; color: #68727d; max-width: 800px; margin: 0 auto 20px;">
-                Analyze, drill down, compare, and export your financial data
-                from one reporting suite.
-            </p>
-
-            <p style="font-size: 15px; color: #555;">
-                Free and open source, subject to the applicable license.
-            </p>
-        </div>
-    </div>
-</section>
+</body>
+</html>

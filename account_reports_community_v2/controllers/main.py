@@ -6,6 +6,7 @@ from odoo.http.stream import content_disposition
 from odoo.tools import osutil
 
 from ..report.xlsx_export import build_xlsx
+from ..report.account_report_pdf import prepare_pdf_report_data
 
 PDF_REPORT_XMLID = 'account_reports_community_v2.account_report_pdf_action'
 
@@ -41,8 +42,9 @@ class AccountReportsCommunityController(http.Controller):
     @http.route('/account_reports_community_v2/pdf', type='http', auth='user', methods=['POST'])
     def export_pdf(self, report_id, options=None, **kwargs):
         report, data = self._get_export_data(report_id, options)
+        prepare_pdf_report_data(data)
         pdf_content, _report_type = request.env['ir.actions.report']._render_qweb_pdf(
-            PDF_REPORT_XMLID, res_ids=None, data={'report_data': data},
+            PDF_REPORT_XMLID, res_ids=[report.id], data={'report_data': data, **data},
         )
         filename = osutil.clean_filename(report.name) + '.pdf'
         return request.make_response(
