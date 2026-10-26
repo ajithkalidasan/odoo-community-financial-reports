@@ -79,6 +79,8 @@ class AccountReport(models.Model):
             'search': (params.get('search') or '').strip().lower(),
             'focus_partner_id': params.get('focus_partner_id'),
             'partner_ids': params.get('partner_ids') or None,
+            'unreconciled_only': bool(params.get('unreconciled_only')),
+            'hide_zero_balance': params.get('hide_zero_balance', True) if params else True,
             'comparison_periods': int(params.get('comparison_periods') or 0),
             # Set by the frontend's date-preset dropdown (This Month/Quarter/
             # Year, etc.) to a value in ('month', 'quarter', 'year') so
@@ -268,23 +270,44 @@ class AccountReport(models.Model):
             for key, amount_by_company in by_key.items()
         }
 
+    def _group_movement_and_count(self, domain, groupby_field, target_currency, date):
+        """Like _group_balance, but aggregates balance, debit, and credit, and returns
+        a count per key - used for the period-movement query."""
+        groups = self.env['account.move.line']._read_group(
+            domain, groupby=[groupby_field, 'company_id'],
+            aggregates=['balance:sum', 'debit:sum', 'credit:sum', 'id:count'],
+        )
+        by_key_balance = {}
+        by_key_debit = {}
+        by_key_credit = {}
+        counts = {}
+        for record, company, balance, debit, credit, count in groups:
+            by_key_balance.setdefault(record.id, {})[company.id] = balance or 0.0
+            by_key_debit.setdefault(record.id, {})[company.id] = debit or 0.0
+            by_key_credit.setdefault(record.id, {})[company.id] = credit or 0.0
+            counts[record.id] = counts.get(record.id, 0) + count
+        balances = {
+            key: self._convert_and_sum_by_company(amount_by_company, target_currency, date)
+            for key, amount_by_company in by_key_balance.items()
+        }
+        debits = {
+            key: self._convert_and_sum_by_company(amount_by_company, target_currency, date)
+            for key, amount_by_company in by_key_debit.items()
+        }
+        credits = {
+            key: self._convert_and_sum_by_company(amount_by_company, target_currency, date)
+            for key, amount_by_company in by_key_credit.items()
+        }
+        return balances, debits, credits, counts
+
     def _group_balance_and_count(self, domain, groupby_field, target_currency, date):
         """Like _group_balance, but also returns a count per key - used for
         the period-movement query, where a zero *sum* isn't enough to tell
         "no activity" apart from "activity that happened to net to zero"
         (e.g. a same-period reversal); only a zero *count* means the former."""
-        groups = self.env['account.move.line']._read_group(
-            domain, groupby=[groupby_field, 'company_id'], aggregates=['balance:sum', 'id:count'],
+        balances, _debits, _credits, counts = self._group_movement_and_count(
+            domain, groupby_field, target_currency, date
         )
-        by_key = {}
-        counts = {}
-        for record, company, value, count in groups:
-            by_key.setdefault(record.id, {})[company.id] = value or 0.0
-            counts[record.id] = counts.get(record.id, 0) + count
-        balances = {
-            key: self._convert_and_sum_by_company(amount_by_company, target_currency, date)
-            for key, amount_by_company in by_key.items()
-        }
         return balances, counts
 
     def _group_aml_rows(self, domain, groupby_field, key_ids, limit=None):
@@ -403,6 +426,10 @@ class AccountReport(models.Model):
         top_level_lines = self.line_ids.filtered(lambda line: not line.parent_id).sorted('sequence')
         lines = [line._build_line_row(options_list) for line in top_level_lines]
 
+        has_variance = len(periods) == 2 and options.get('comparison_periods', 0) > 0
+        if has_variance:
+            self._attach_variance_to_lines(lines)
+
         gl_report = self.env.ref(GENERAL_LEDGER_REPORT_XMLID, raise_if_not_found=False)
 
         return {
@@ -413,10 +440,39 @@ class AccountReport(models.Model):
             'columns': columns,
             'periods': periods,
             'lines': lines,
+            'has_variance': has_variance,
             'general_ledger_report_id': gl_report.id if gl_report else False,
             'has_unposted_entries': self._has_unposted_entries(options),
             'currency': self._get_currency_info(options),
         }
+
+    def _attach_variance_to_lines(self, lines):
+        """When exactly two periods are compared (current vs previous), compute
+        variance (amount difference and percentage change) for each column in
+        each line and its children."""
+        for line in lines:
+            line_periods = line.get('periods') or []
+            if len(line_periods) >= 2:
+                curr_cols = {c['expression_label']: c['value'] for c in line_periods[0].get('columns', [])}
+                prev_cols = {c['expression_label']: c['value'] for c in line_periods[1].get('columns', [])}
+                variance = []
+                for expr_label, curr_val in curr_cols.items():
+                    prev_val = prev_cols.get(expr_label, 0.0) or 0.0
+                    curr_val = curr_val or 0.0
+                    diff_amount = curr_val - prev_val
+                    if abs(prev_val) > 0.0001:
+                        diff_percent = (diff_amount / abs(prev_val)) * 100.0
+                    else:
+                        diff_percent = None
+                    variance.append({
+                        'expression_label': expr_label,
+                        'diff_amount': diff_amount,
+                        'diff_percent': diff_percent,
+                    })
+                line['variance'] = variance
+
+            if line.get('children'):
+                self._attach_variance_to_lines(line['children'])
 
     def _convert_aml_field(self, aml, field, target_currency, date):
         """One account.move.line's `field` (debit/credit/balance/
@@ -517,14 +573,20 @@ class AccountReport(models.Model):
         opening_domain = entries_domain + [('account_id', 'in', accounts.ids)]
         if date_from:
             opening_domain.append(('date', '<', date_from))
-        opening_balances = self._group_balance(opening_domain, 'account_id', target_currency, date_to)
+            opening_balances, opening_debits, opening_credits, _opening_counts = self._group_movement_and_count(
+                opening_domain, 'account_id', target_currency, date_to
+            )
+        else:
+            opening_balances, opening_debits, opening_credits = {}, {}, {}
 
         period_domain = entries_domain + [('account_id', 'in', accounts.ids)]
         if date_from:
             period_domain.append(('date', '>=', date_from))
         if date_to:
             period_domain.append(('date', '<=', date_to))
-        period_movement, period_count = self._group_balance_and_count(period_domain, 'account_id', target_currency, date_to)
+        period_movement, period_debit, period_credit, period_count = self._group_movement_and_count(
+            period_domain, 'account_id', target_currency, date_to
+        )
 
         export_mode = options.get('export_mode')
         unfolded_account_ids = accounts.ids if export_mode else [
@@ -538,7 +600,9 @@ class AccountReport(models.Model):
         for account in accounts:
             opening_balance = opening_balances.get(account.id, 0.0)
             movement = period_movement.get(account.id, 0.0)
-            if not period_count.get(account.id) and not opening_balance:
+            debit = period_debit.get(account.id, 0.0)
+            credit = period_credit.get(account.id, 0.0)
+            if options.get('hide_zero_balance', True) and not period_count.get(account.id) and not opening_balance:
                 continue
 
             unfolded = export_mode or account.id in unfolded_ids
@@ -555,6 +619,12 @@ class AccountReport(models.Model):
                 'id': account.id,
                 'account_id': account.id,
                 'name': f'{account.code} {account.name}',
+                'debit': debit,
+                'credit': credit,
+                'initial_debit': opening_debits.get(account.id, 0.0),
+                'initial_credit': opening_credits.get(account.id, 0.0),
+                'opening_debit': opening_debits.get(account.id, 0.0),
+                'opening_credit': opening_credits.get(account.id, 0.0),
                 'opening_balance': opening_balance,
                 'closing_balance': opening_balance + movement,
                 'foldable': True,
@@ -598,6 +668,8 @@ class AccountReport(models.Model):
             ('account_id.account_type', 'in', ('asset_receivable', 'liability_payable')),
             ('partner_id', '=', partner_id),
         ]
+        if options.get('unreconciled_only'):
+            entries_domain.append(('reconciled', '=', False))
         date_from = options.get('date_from')
         date_to = options.get('date_to')
         if date_from:
@@ -644,6 +716,8 @@ class AccountReport(models.Model):
         entries_domain = self._base_entries_domain(options)
         entries_domain.append(('account_id.account_type', 'in', ('asset_receivable', 'liability_payable')))
         entries_domain.append(('partner_id', '!=', False))
+        if options.get('unreconciled_only'):
+            entries_domain.append(('reconciled', '=', False))
 
         focus_partner_id = options.get('focus_partner_id')
         if focus_partner_id:
@@ -659,14 +733,20 @@ class AccountReport(models.Model):
         opening_domain = entries_domain[:]
         if date_from:
             opening_domain.append(('date', '<', date_from))
-        opening_balances = self._group_balance(opening_domain, 'partner_id', target_currency, date_to)
+            opening_balances, opening_debits, opening_credits, _opening_count = self._group_movement_and_count(
+                opening_domain, 'partner_id', target_currency, date_to
+            )
+        else:
+            opening_balances, opening_debits, opening_credits = {}, {}, {}
 
         period_domain = entries_domain[:]
         if date_from:
             period_domain.append(('date', '>=', date_from))
         if date_to:
             period_domain.append(('date', '<=', date_to))
-        period_movement, period_count = self._group_balance_and_count(period_domain, 'partner_id', target_currency, date_to)
+        period_movement, period_debit, period_credit, period_count = self._group_movement_and_count(
+            period_domain, 'partner_id', target_currency, date_to
+        )
 
         partner_ids = set(opening_balances) | set(period_movement)
         partners_by_id = {partner.id: partner for partner in self.env['res.partner'].browse(partner_ids)}
@@ -683,6 +763,8 @@ class AccountReport(models.Model):
         for partner_id, partner in partners_by_id.items():
             opening_balance = opening_balances.get(partner_id, 0.0)
             movement = period_movement.get(partner_id, 0.0)
+            debit = period_debit.get(partner_id, 0.0)
+            credit = period_credit.get(partner_id, 0.0)
             if not period_count.get(partner_id) and not opening_balance:
                 continue
 
@@ -700,6 +782,12 @@ class AccountReport(models.Model):
                 'id': partner_id,
                 'partner_id': partner_id,
                 'name': partner.name,
+                'debit': debit,
+                'credit': credit,
+                'initial_debit': opening_debits.get(partner_id, 0.0),
+                'initial_credit': opening_credits.get(partner_id, 0.0),
+                'opening_debit': opening_debits.get(partner_id, 0.0),
+                'opening_credit': opening_credits.get(partner_id, 0.0),
                 'opening_balance': opening_balance,
                 'closing_balance': opening_balance + movement,
                 'foldable': True,

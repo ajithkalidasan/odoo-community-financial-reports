@@ -156,7 +156,7 @@ class AccountReportLine(models.Model):
                 else:
                     periods = self._compute_periods(options_list, extra_domain=[('account_id', '=', account.id)])
                 has_value = any(col['value'] for period in periods for col in period['columns'])
-                if has_value:
+                if has_value or not main_options.get('hide_zero_balance', True):
                     children.append({
                         'id': f'{self.id}-account-{account.id}',
                         'real_line_id': self.id,

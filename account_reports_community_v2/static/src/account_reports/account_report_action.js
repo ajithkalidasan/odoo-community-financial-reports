@@ -41,6 +41,8 @@ export class AccountReportAction extends Component {
             availablePartners: [],
             partnerMenuOpen: false,
             partnerFilterQuery: "",
+            unreconciledOnly: false,
+            hideZeroBalance: true,
             isLoading: false,
             loadingMoreLineId: null,
         });
@@ -88,6 +90,8 @@ export class AccountReportAction extends Component {
             journal_ids: this.state.journalIds.length ? [...this.state.journalIds] : null,
             partner_ids: this.state.partnerIds.length ? [...this.state.partnerIds] : null,
             all_entries: this.state.allEntries,
+            unreconciled_only: this.state.unreconciledOnly,
+            hide_zero_balance: this.state.hideZeroBalance,
             comparison_periods: this.state.comparisonEnabled ? 1 : 0,
             period_granularity: this.state.periodGranularity,
         };
@@ -95,6 +99,16 @@ export class AccountReportAction extends Component {
 
     async toggleComparison() {
         this.state.comparisonEnabled = !this.state.comparisonEnabled;
+        await this.loadReport();
+    }
+
+    async toggleUnreconciledOnly() {
+        this.state.unreconciledOnly = !this.state.unreconciledOnly;
+        await this.loadReport();
+    }
+
+    async toggleHideZeroBalance() {
+        this.state.hideZeroBalance = !this.state.hideZeroBalance;
         await this.loadReport();
     }
 

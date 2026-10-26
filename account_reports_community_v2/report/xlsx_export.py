@@ -27,6 +27,8 @@ def build_xlsx(report, data):
         'bold': workbook.add_format({'bold': True}),
         'bold_amount': workbook.add_format({'bold': True, 'num_format': '#,##0.00'}),
         'amount': workbook.add_format({'num_format': '#,##0.00'}),
+        'italic': workbook.add_format({'italic': True, 'font_color': '#666666'}),
+        'italic_amount': workbook.add_format({'italic': True, 'font_color': '#666666', 'num_format': '#,##0.00'}),
         'date': workbook.add_format({'num_format': 'yyyy-mm-dd'}),
         'level0': workbook.add_format({'bold': True}),
         'level1': workbook.add_format({'indent': 1}),
@@ -68,11 +70,15 @@ def _level_format(formats, level):
 def _write_generic(worksheet, formats, data, row):
     columns = data.get('columns') or []
     periods = data.get('periods') or []
+    has_variance = data.get('has_variance')
     col = 1
     if len(periods) > 1:
         for period in periods:
             worksheet.merge_range(row, col, row, col + len(columns) - 1, period['label'], formats['header'])
             col += len(columns)
+        if has_variance:
+            worksheet.merge_range(row, col, row, col + (len(columns) * 2) - 1, 'Variance', formats['header'])
+            col += len(columns) * 2
         row += 1
 
     worksheet.write(row, 0, 'Name', formats['header'])
@@ -80,6 +86,12 @@ def _write_generic(worksheet, formats, data, row):
     for _period in periods:
         for column in columns:
             worksheet.write(row, col, column['name'], formats['header'])
+            col += 1
+    if has_variance:
+        for _column in columns:
+            worksheet.write(row, col, 'Change ($)', formats['header'])
+            col += 1
+            worksheet.write(row, col, 'Change (%)', formats['header'])
             col += 1
     row += 1
 
@@ -96,13 +108,27 @@ def _write_generic(worksheet, formats, data, row):
                     if value is not None:
                         worksheet.write_number(row, col, value, amount_fmt)
                     col += 1
+            if has_variance and line.get('variance'):
+                for v in line['variance']:
+                    diff_amount = v.get('diff_amount')
+                    diff_pct = v.get('diff_percent')
+                    amount_fmt = formats['bold_amount'] if level == 0 else formats['amount']
+                    if diff_amount is not None:
+                        worksheet.write_number(row, col, diff_amount, amount_fmt)
+                    col += 1
+                    if diff_pct is not None:
+                        worksheet.write(row, col, f"{'+' if diff_pct > 0 else ''}{diff_pct:.1f}%")
+                    else:
+                        worksheet.write(row, col, '-')
+                    col += 1
             row += 1
             if line.get('children'):
                 write_lines(line['children'], level + 1)
 
     write_lines(data.get('lines') or [], 0)
     worksheet.set_column(0, 0, 45)
-    worksheet.set_column(1, max(1, len(columns) * max(1, len(periods))), 16)
+    total_cols = len(columns) * max(1, len(periods)) + (len(columns) * 2 if has_variance else 0)
+    worksheet.set_column(1, max(1, total_cols), 16)
     return row
 
 
@@ -129,9 +155,19 @@ def _write_ledger_style(worksheet, formats, data, row, handler):
 
     for group in data.get('lines') or []:
         worksheet.write(row, 0, group.get('name') or '', formats['bold'])
-        if 'opening_balance' in group:
+        if handler in ('general_ledger', 'partner_ledger'):
+            worksheet.write_number(row, len(headers) - 3, group.get('debit', 0.0), formats['bold_amount'])
+            worksheet.write_number(row, len(headers) - 2, group.get('credit', 0.0), formats['bold_amount'])
+            worksheet.write_number(row, len(headers) - 1, group.get('closing_balance', 0.0), formats['bold_amount'])
+            row += 1
+            worksheet.write(row, 0, 'Initial Balance', formats['italic'])
+            worksheet.write_number(row, len(headers) - 3, group.get('initial_debit', 0.0), formats['italic_amount'])
+            worksheet.write_number(row, len(headers) - 2, group.get('initial_credit', 0.0), formats['italic_amount'])
+            worksheet.write_number(row, len(headers) - 1, group.get('opening_balance', 0.0), formats['italic_amount'])
+            row += 1
+        elif 'opening_balance' in group:
             worksheet.write_number(row, len(headers) - 1, group['opening_balance'], formats['bold_amount'])
-        row += 1
+            row += 1
 
         for aml in group.get('aml_rows') or []:
             for col, key in enumerate(row_keys):
@@ -146,6 +182,9 @@ def _write_ledger_style(worksheet, formats, data, row, handler):
 
         if 'closing_balance' in group:
             worksheet.write(row, 0, 'Closing Balance', formats['bold'])
+            if handler in ('general_ledger', 'partner_ledger'):
+                worksheet.write_number(row, len(headers) - 3, group.get('debit', 0.0), formats['bold_amount'])
+                worksheet.write_number(row, len(headers) - 2, group.get('credit', 0.0), formats['bold_amount'])
             worksheet.write_number(row, len(headers) - 1, group['closing_balance'], formats['bold_amount'])
             row += 1
         elif handler == 'journal_report':

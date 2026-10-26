@@ -25,17 +25,16 @@ Financial Reports
 * Cash Flow Statement
 
 Reporting Capabilities
-----------------------
-* Interactive reports in the Odoo interface
-* Drill-down from report lines to accounting details
-* Flexible reporting periods
-* Period comparison
-* Report-specific filters
-* Multi-company reporting
-* Multi-currency support
-* PDF export
-* XLSX export
-* Pagination for large transaction datasets
+* Dedicated Initial Balance row with Debit, Credit, and Net Balance
+* Ending Balance summary with period Debit, Credit, and Net totals
+* Unreconciled entries filter for Partner Ledger
+* Hide zero balance accounts / active accounts toggle
+* Period comparison with variance ($ Change and % Change)
+* Interactive reports in the Odoo interface with drill-down
+* Flexible reporting periods with date presets
+* Multi-company and multi-currency support
+* Professional PDF and XLSX exports
+* Keyset pagination for large transaction datasets
 
 Built for Odoo Community
 ========================
@@ -49,7 +48,7 @@ It provides an independent implementation of financial reporting functionality u
 Requirements
 ============
 
-* Odoo 19.0 Community Edition
+* Odoo 18.0 Community Edition
 * Standard Odoo account module
 
 No Odoo Enterprise modules are required.

@@ -96,3 +96,17 @@ class TestProfitAndLoss(AccountTestInvoicingCommon):
             self.assertTrue(account_row['account_id'])
             self.assertTrue(account_row['code'])
             self.assertIn(account_row['code'], account_row['name'])
+
+    def test_comparison_variance_computation(self):
+        data = self.report.action_get_report_data({
+            'date_from': '2025-01-01',
+            'date_to': '2025-01-31',
+            'comparison_periods': 1,
+            'period_granularity': 'month',
+        })
+        self.assertTrue(data.get('has_variance'))
+        self.assertEqual(len(data['periods']), 2)
+        net_profit_line = next(line for line in data['lines'] if line['code'] == 'PL_NET_PROFIT')
+        self.assertTrue(net_profit_line.get('variance'))
+        var = net_profit_line['variance'][0]
+        self.assertAlmostEqual(var['diff_amount'], 60.0, places=2)

@@ -50,6 +50,8 @@ class TestGeneralLedger(AccountTestInvoicingCommon):
         row = data['lines'][0]
         total_debit = sum(r['debit'] for r in row['aml_rows'])
         total_credit = sum(r['credit'] for r in row['aml_rows'])
+        self.assertAlmostEqual(row['debit'], total_debit, places=2)
+        self.assertAlmostEqual(row['credit'], total_credit, places=2)
         self.assertAlmostEqual(
             row['opening_balance'] + total_debit - total_credit,
             row['closing_balance'],
@@ -71,6 +73,8 @@ class TestGeneralLedger(AccountTestInvoicingCommon):
             period_2['lines'][0]['opening_balance'],
             places=2,
         )
+        self.assertAlmostEqual(period_2['lines'][0]['initial_debit'], 100.0, places=2)
+        self.assertAlmostEqual(period_2['lines'][0]['initial_credit'], 0.0, places=2)
 
     def test_focus_account_filters_to_single_account(self):
         data = self._get_data('2025-01-01', '2025-03-01', focus_account_id=self.expense_account.id)
@@ -186,3 +190,31 @@ class TestGeneralLedger(AccountTestInvoicingCommon):
         same_currency_row = next(r for r in row['aml_rows'] if r['id'] != foreign_line.id)
         self.assertIsNone(same_currency_row['foreign_currency_name'])
         self.assertIsNone(same_currency_row['amount_currency'])
+
+    def test_hide_zero_balance_option(self):
+        dormant_account = self.env['account.account'].search([
+            ('code', '=', '999999'),
+        ], limit=1)
+        if not dormant_account:
+            dormant_account = self.env['account.account'].create({
+                'name': 'Dormant Account For Testing',
+                'code': '999999',
+                'account_type': 'asset_current',
+            })
+        # Default / hide_zero_balance=True excludes dormant account
+        data_hidden = self.report.action_get_report_data({
+            'date_from': '2025-01-01',
+            'date_to': '2025-03-01',
+            'hide_zero_balance': True,
+        })
+        hidden_ids = [line['account_id'] for line in data_hidden['lines']]
+        self.assertNotIn(dormant_account.id, hidden_ids)
+
+        # hide_zero_balance=False includes all accounts
+        data_all = self.report.action_get_report_data({
+            'date_from': '2025-01-01',
+            'date_to': '2025-03-01',
+            'hide_zero_balance': False,
+        })
+        all_ids = [line['account_id'] for line in data_all['lines']]
+        self.assertIn(dormant_account.id, all_ids)
