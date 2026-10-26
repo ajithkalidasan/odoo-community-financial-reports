@@ -10,11 +10,17 @@
                     </span>
                     <strong t-esc="line.name"/>
                 </td>
-                <td class="text-end"/>
-                <td class="text-end"/>
-                <td class="text-end" t-esc="this.formatAmount(line.opening_balance)"/>
+                <td class="text-end"><strong t-esc="this.formatAmount(line.debit)"/></td>
+                <td class="text-end"><strong t-esc="this.formatAmount(line.credit)"/></td>
+                <td class="text-end"><strong t-esc="this.formatAmount(line.closing_balance)"/></td>
             </tr>
             <t t-if="line.unfolded">
+                <tr class="o_account_reports_community_v2_gl_initial_row text-muted fst-italic">
+                    <td colspan="4" class="ps-4">Initial Balance</td>
+                    <td class="text-end" t-esc="this.formatAmount(line.initial_debit)"/>
+                    <td class="text-end" t-esc="this.formatAmount(line.initial_credit)"/>
+                    <td class="text-end" t-esc="this.formatAmount(line.opening_balance)"/>
+                </tr>
                 <tr t-foreach="line.aml_rows" t-as="row" t-key="row.id">
                     <td t-esc="row.date"/>
                     <td>
@@ -39,7 +45,9 @@
                     </td>
                 </tr>
                 <tr class="o_account_reports_community_v2_gl_closing_row">
-                    <td colspan="6" class="text-end"><strong>Closing Balance</strong></td>
+                    <td colspan="4" class="text-end"><strong>Closing Balance</strong></td>
+                    <td class="text-end"><strong t-esc="this.formatAmount(line.debit)"/></td>
+                    <td class="text-end"><strong t-esc="this.formatAmount(line.credit)"/></td>
                     <td class="text-end"><strong t-esc="this.formatAmount(line.closing_balance)"/></td>
                 </tr>
             </t>

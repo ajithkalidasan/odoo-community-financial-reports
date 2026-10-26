@@ -89,6 +89,22 @@
                             <t t-esc="state.allEntries ? 'All Entries' : 'Posted Entries'"/>
                         </button>
 
+                        <button t-if="state.report.report_handler === 'partner_ledger'"
+                                class="btn btn-sm"
+                                t-att-class="state.unreconciledOnly ? 'btn-primary' : 'btn-secondary'"
+                                t-on-click="toggleUnreconciledOnly">
+                            <i class="fa fa-clock-o me-1"/>
+                            <t t-esc="state.unreconciledOnly ? 'Unreconciled Only' : 'All Items'"/>
+                        </button>
+
+                        <button t-if="['generic', 'general_ledger'].includes(state.report.report_handler)"
+                                class="btn btn-sm"
+                                t-att-class="state.hideZeroBalance ? 'btn-secondary' : 'btn-outline-secondary'"
+                                t-on-click="toggleHideZeroBalance">
+                            <i class="fa fa-eye-slash me-1"/>
+                            <t t-esc="state.hideZeroBalance ? 'Active Accounts' : 'All Accounts'"/>
+                        </button>
+
                         <button t-if="state.report.report_handler === 'generic'"
                                 class="btn btn-sm"
                                 t-att-class="state.comparisonEnabled ? 'btn-primary' : 'btn-secondary'"
@@ -123,12 +139,21 @@
                                     <t t-foreach="state.report.periods" t-as="period" t-key="period_index">
                                         <th class="text-center" t-att-colspan="state.report.columns.length" t-esc="period.label"/>
                                     </t>
+                                    <th t-if="state.report.has_variance" class="text-center" t-att-colspan="state.report.columns.length * 2">
+                                        Variance
+                                    </th>
                                 </tr>
                                 <tr>
                                     <th>Name</th>
                                     <t t-foreach="state.report.periods" t-as="period" t-key="period_index">
                                         <t t-foreach="state.report.columns" t-as="column" t-key="column.expression_label">
                                             <th class="text-end" t-esc="column.name"/>
+                                        </t>
+                                    </t>
+                                    <t t-if="state.report.has_variance">
+                                        <t t-foreach="state.report.columns" t-as="column" t-key="column.expression_label">
+                                            <th class="text-end">Change ($)</th>
+                                            <th class="text-end">Change (%)</th>
                                         </t>
                                     </t>
                                 </tr>
@@ -267,6 +292,18 @@
                         <td class="text-end o_account_reports_community_v2_cell"
                             t-on-click="() => this.onCellClick(line, column, period)"
                             t-esc="column.value != null ? this.formatAmount(column.value) : ''"/>
+                    </t>
+                </t>
+                <t t-if="line.variance">
+                    <t t-foreach="line.variance" t-as="v" t-key="v.expression_label">
+                        <td class="text-end" t-esc="this.formatAmount(v.diff_amount)"/>
+                        <td class="text-end">
+                            <span t-if="v.diff_percent != null"
+                                  t-att-class="v.diff_percent &gt; 0 ? 'text-success' : (v.diff_percent &lt; 0 ? 'text-danger' : 'text-muted')">
+                                <t t-esc="(v.diff_percent &gt; 0 ? '+' : '') + v.diff_percent.toFixed(1) + '%'"/>
+                            </span>
+                            <span t-else="" class="text-muted">-</span>
+                        </td>
                     </t>
                 </t>
             </tr>

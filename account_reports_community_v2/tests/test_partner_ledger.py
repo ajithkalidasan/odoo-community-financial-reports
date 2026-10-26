@@ -55,6 +55,8 @@ class TestPartnerLedger(AccountTestInvoicingCommon):
         row = data['lines'][0]
         total_debit = sum(r['debit'] for r in row['aml_rows'])
         total_credit = sum(r['credit'] for r in row['aml_rows'])
+        self.assertAlmostEqual(row['debit'], total_debit, places=2)
+        self.assertAlmostEqual(row['credit'], total_credit, places=2)
         self.assertAlmostEqual(
             row['opening_balance'] + total_debit - total_credit, row['closing_balance'], places=2,
         )
@@ -83,6 +85,8 @@ class TestPartnerLedger(AccountTestInvoicingCommon):
         self.assertAlmostEqual(
             period_1['lines'][0]['closing_balance'], period_2['lines'][0]['opening_balance'], places=2,
         )
+        self.assertAlmostEqual(period_2['lines'][0]['initial_debit'], 100.0, places=2)
+        self.assertAlmostEqual(period_2['lines'][0]['initial_credit'], 0.0, places=2)
 
     def test_partner_ids_filter_excludes_other_partners(self):
         """Filtering to a partner with no receivable/payable movement of
@@ -97,3 +101,42 @@ class TestPartnerLedger(AccountTestInvoicingCommon):
         partners = self.report.action_get_available_partners()
         partner_ids = {p['id'] for p in partners}
         self.assertIn(self.partner_a.id, partner_ids)
+
+    def test_unreconciled_only_filter(self):
+        journal = self.company_data['default_journal_misc']
+        pay_move = self.env['account.move'].create({
+            'move_type': 'entry',
+            'journal_id': journal.id,
+            'date': '2025-01-20',
+            'line_ids': [
+                (0, 0, {
+                    'account_id': self.receivable_account.id, 'partner_id': self.partner_a.id,
+                    'debit': 0.0, 'credit': 100.0,
+                }),
+                (0, 0, {'account_id': self.revenue_account.id, 'debit': 100.0, 'credit': 0.0}),
+            ],
+        })
+        pay_move.action_post()
+        rec_line_1 = self.move_1.line_ids.filtered(lambda l: l.account_id == self.receivable_account)
+        rec_line_2 = pay_move.line_ids.filtered(lambda l: l.account_id == self.receivable_account)
+        (rec_line_1 + rec_line_2).reconcile()
+
+        data_all = self.report.action_get_report_data({
+            'date_from': '2025-01-01', 'date_to': '2025-03-01',
+            'focus_partner_id': self.partner_a.id,
+            'unfolded_line_ids': [self.partner_a.id],
+            'unreconciled_only': False,
+        })
+        move_names_all = [r['move_name'] for r in data_all['lines'][0]['aml_rows']]
+        self.assertIn(self.move_1.name, move_names_all)
+        self.assertIn(self.move_2.name, move_names_all)
+
+        data_unrec = self.report.action_get_report_data({
+            'date_from': '2025-01-01', 'date_to': '2025-03-01',
+            'focus_partner_id': self.partner_a.id,
+            'unfolded_line_ids': [self.partner_a.id],
+            'unreconciled_only': True,
+        })
+        move_names_unrec = [r['move_name'] for r in data_unrec['lines'][0]['aml_rows']]
+        self.assertNotIn(self.move_1.name, move_names_unrec)
+        self.assertIn(self.move_2.name, move_names_unrec)

@@ -10,16 +10,16 @@ Provides a complete financial reporting suite designed specifically for Odoo Com
 Key features:
 -------------
 - 10 essential financial and accounting reports
-- Interactive report interface
-- Drill-down from reports to accounting details
-- Flexible reporting periods
-- Period comparison
-- Report-specific filters
-- Multi-company support
-- Multi-currency support
-- PDF export
-- XLSX export
-- Pagination for large transaction datasets
+- Dedicated Initial Balance row with Debit, Credit, and Net Balance
+- Ending Balance summary with period Debit, Credit, and Net totals
+- Unreconciled entries filter for Partner Ledger
+- Hide zero balance accounts / active accounts toggle
+- Period comparison with variance ($ Change and % Change)
+- Interactive report interface with drill-down to journal entries
+- Flexible reporting periods with date presets
+- Multi-company and multi-currency support
+- Professional PDF and XLSX exports
+- High-performance keyset pagination for large transaction datasets
 
 Technical Information:
 ----------------------
@@ -30,9 +30,10 @@ This module does not depend on, include, or reuse proprietary code from the Odoo
 Designed for accountants, finance teams, business owners, and Odoo implementers who need comprehensive financial reporting in Odoo Community Edition.
     """,
     'category': 'Accounting/Accounting',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'author': 'Ajith',
-    'website': 'https://ajithkalidasan.github.io/ajith/',
+    'website': 'https://ajith.dev',
+    'support': 'support@ajith.dev',
     'license': 'LGPL-3',
     'depends': ['account'],
     'data': [

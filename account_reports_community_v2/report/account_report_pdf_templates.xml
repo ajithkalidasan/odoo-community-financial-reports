@@ -59,6 +59,12 @@
                                 </th>
                             </t>
                         </t>
+                        <t t-if="report_data.get('has_variance')">
+                            <t t-foreach="report_data['columns']" t-as="column" t-key="column['expression_label']">
+                                <th class="text-end">Change ($)</th>
+                                <th class="text-end">Change (%)</th>
+                            </t>
+                        </t>
                     </tr>
                 </thead>
                 <tbody>
@@ -80,6 +86,15 @@
                             <td class="text-end" t-esc="'%.2f' % column['value'] if column['value'] is not None else ''"/>
                         </t>
                     </t>
+                    <t t-if="line.get('variance')">
+                        <t t-foreach="line['variance']" t-as="v" t-key="v['expression_label']">
+                            <td class="text-end" t-esc="'%.2f' % v['diff_amount'] if v.get('diff_amount') is not None else ''"/>
+                            <td class="text-end">
+                                <t t-if="v.get('diff_percent') is not None" t-esc="('+' if v['diff_percent'] &gt; 0 else '') + ('%.1f%%' % v['diff_percent'])"/>
+                                <t t-else="">-</t>
+                            </td>
+                        </t>
+                    </t>
                 </tr>
                 <t t-if="line['children']" t-call="account_reports_community_v2.PdfGenericReportLines">
                     <t t-set="lines" t-value="line['children']"/>
@@ -98,7 +113,18 @@
                 </thead>
                 <tbody>
                     <t t-foreach="report_data['lines']" t-as="group" t-key="group['id']">
-                        <tr class="fw-bold"><td colspan="7" t-esc="group['name']"/></tr>
+                        <tr class="fw-bold">
+                            <td colspan="4" t-esc="group['name']"/>
+                            <td class="text-end" t-esc="'%.2f' % group.get('debit', 0.0)"/>
+                            <td class="text-end" t-esc="'%.2f' % group.get('credit', 0.0)"/>
+                            <td class="text-end" t-esc="'%.2f' % group['closing_balance']"/>
+                        </tr>
+                        <tr class="text-muted fst-italic">
+                            <td colspan="4" class="ps-3">Initial Balance</td>
+                            <td class="text-end" t-esc="'%.2f' % group.get('initial_debit', 0.0)"/>
+                            <td class="text-end" t-esc="'%.2f' % group.get('initial_credit', 0.0)"/>
+                            <td class="text-end" t-esc="'%.2f' % group['opening_balance']"/>
+                        </tr>
                         <tr t-foreach="group.get('aml_rows') or []" t-as="aml" t-key="aml['id']">
                             <td t-esc="aml.get('date')"/>
                             <td t-esc="aml.get('move_name')"/>
@@ -109,7 +135,9 @@
                             <td class="text-end" t-esc="'%.2f' % aml.get('running_balance', 0.0)"/>
                         </tr>
                         <tr class="fw-bold">
-                            <td colspan="6">Closing Balance</td>
+                            <td colspan="4">Closing Balance</td>
+                            <td class="text-end" t-esc="'%.2f' % group.get('debit', 0.0)"/>
+                            <td class="text-end" t-esc="'%.2f' % group.get('credit', 0.0)"/>
                             <td class="text-end" t-esc="'%.2f' % group['closing_balance']"/>
                         </tr>
                     </t>
@@ -128,7 +156,18 @@
                 </thead>
                 <tbody>
                     <t t-foreach="report_data['lines']" t-as="group" t-key="group['id']">
-                        <tr class="fw-bold"><td colspan="7" t-esc="group['name']"/></tr>
+                        <tr class="fw-bold">
+                            <td colspan="4" t-esc="group['name']"/>
+                            <td class="text-end" t-esc="'%.2f' % group.get('debit', 0.0)"/>
+                            <td class="text-end" t-esc="'%.2f' % group.get('credit', 0.0)"/>
+                            <td class="text-end" t-esc="'%.2f' % group['closing_balance']"/>
+                        </tr>
+                        <tr class="text-muted fst-italic">
+                            <td colspan="4" class="ps-3">Initial Balance</td>
+                            <td class="text-end" t-esc="'%.2f' % group.get('initial_debit', 0.0)"/>
+                            <td class="text-end" t-esc="'%.2f' % group.get('initial_credit', 0.0)"/>
+                            <td class="text-end" t-esc="'%.2f' % group['opening_balance']"/>
+                        </tr>
                         <tr t-foreach="group.get('aml_rows') or []" t-as="aml" t-key="aml['id']">
                             <td t-esc="aml.get('date')"/>
                             <td t-esc="aml.get('move_name')"/>
@@ -139,7 +178,9 @@
                             <td class="text-end" t-esc="'%.2f' % aml.get('running_balance', 0.0)"/>
                         </tr>
                         <tr class="fw-bold">
-                            <td colspan="6">Closing Balance</td>
+                            <td colspan="4">Closing Balance</td>
+                            <td class="text-end" t-esc="'%.2f' % group.get('debit', 0.0)"/>
+                            <td class="text-end" t-esc="'%.2f' % group.get('credit', 0.0)"/>
                             <td class="text-end" t-esc="'%.2f' % group['closing_balance']"/>
                         </tr>
                     </t>
